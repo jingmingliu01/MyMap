@@ -1,0 +1,16 @@
+{
+  "name": "广州塔",
+  "type": "attraction",
+  "branches": [
+    {
+      "id": 1,
+      "branch_name": "广州塔",
+      "address": "赤岗街道新鸿社区滨江东路222号",
+      "district": "海珠区",
+      "longitude": 113.324521,
+      "latitude": 23.106428,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    }
+  ]
+}

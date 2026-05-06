@@ -1,0 +1,756 @@
+{
+  "name": "永庆坊",
+  "type": "place",
+  "branches": [
+    {
+      "id": 1,
+      "branch_name": "永庆坊",
+      "address": "恩宁路99号",
+      "district": "荔湾区",
+      "longitude": 113.237495,
+      "latitude": 23.114821,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 2,
+      "branch_name": "永庆坊吉祥广场",
+      "address": "恩宁路211号(黄沙地铁站B口步行460米)",
+      "district": "荔湾区",
+      "longitude": 113.240286,
+      "latitude": 23.114517,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 3,
+      "branch_name": "永庆坊(公交站)",
+      "address": "千年西关精华线",
+      "district": "荔湾区",
+      "longitude": 113.239839,
+      "latitude": 23.113808,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 4,
+      "branch_name": "永庆坊美食",
+      "address": "逢源街道华贵路27号贵贤上品",
+      "district": "荔湾区",
+      "longitude": 113.241325,
+      "latitude": 23.120775,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 5,
+      "branch_name": "食神·永庆坊啫煲(广州店)",
+      "address": "宝华路与十五甫正街交叉口西南40米",
+      "district": "荔湾区",
+      "longitude": 113.241675,
+      "latitude": 23.115125,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 6,
+      "branch_name": "永庆坊旅拍",
+      "address": "恩宁路78号二楼",
+      "district": "荔湾区",
+      "longitude": 113.237091,
+      "latitude": 23.114791,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 7,
+      "branch_name": "永庆坊社区居委会",
+      "address": "多宝街18号",
+      "district": "荔湾区",
+      "longitude": 113.23762,
+      "latitude": 23.116386,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 8,
+      "branch_name": "永庆坊木棉广场",
+      "address": "恩宁路159号",
+      "district": "荔湾区",
+      "longitude": 113.23873,
+      "latitude": 23.114277,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 9,
+      "branch_name": "肯德基(永庆坊店)",
+      "address": "恩宁路永庆坊自编十二甫西街80、82号",
+      "district": "荔湾区",
+      "longitude": 113.240012,
+      "latitude": 23.113967,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 10,
+      "branch_name": "永庆坊社区综治中心",
+      "address": "上下九恩宁路十一甫新街5-1",
+      "district": "荔湾区",
+      "longitude": 113.240805,
+      "latitude": 23.113865,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 11,
+      "branch_name": "花筑·樾舍(广州永庆坊景区店)",
+      "address": "永庆二巷12号",
+      "district": "荔湾区",
+      "longitude": 113.237375,
+      "latitude": 23.115425,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 12,
+      "branch_name": "永庆坊(金声电影院)(公交站)",
+      "address": "千年西关精华线",
+      "district": "荔湾区",
+      "longitude": 113.238283,
+      "latitude": 23.114231,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 13,
+      "branch_name": "永庆坊金声停车场",
+      "address": "恩宁路239号(黄沙地铁站B口步行340米)",
+      "district": "荔湾区",
+      "longitude": 113.240962,
+      "latitude": 23.11372,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 14,
+      "branch_name": "M Stand(广州永庆坊店)",
+      "address": "恩宁路永庆坊十二莆西街85.8789号(肯德基旁)",
+      "district": "荔湾区",
+      "longitude": 113.239909,
+      "latitude": 23.113993,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 15,
+      "branch_name": "永庆坊会议中心",
+      "address": "恩宁路227号3层(黄沙地铁站B口步行370米)",
+      "district": "荔湾区",
+      "longitude": 113.240059,
+      "latitude": 23.113794,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 16,
+      "branch_name": "永庆坊游客服务中心",
+      "address": "恩宁路241号",
+      "district": "荔湾区",
+      "longitude": 113.240684,
+      "latitude": 23.113596,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 17,
+      "branch_name": "万科永庆坊物业服务中心",
+      "address": "永庆一巷12号",
+      "district": "荔湾区",
+      "longitude": 113.237225,
+      "latitude": 23.115325,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 18,
+      "branch_name": "中共永庆坊社区委员会",
+      "address": "多宝街18号",
+      "district": "荔湾区",
+      "longitude": 113.237682,
+      "latitude": 23.116376,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 19,
+      "branch_name": "星巴克广州永庆坊非遗概念店",
+      "address": "恩宁路与蓬莱路交叉口东120米",
+      "district": "荔湾区",
+      "longitude": 113.239166,
+      "latitude": 23.114408,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 20,
+      "branch_name": "永庆坊十六甫小楼",
+      "address": "十六甫西二巷21号(黄沙地铁站B口步行370米)",
+      "district": "荔湾区",
+      "longitude": 113.240947,
+      "latitude": 23.114014,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 21,
+      "branch_name": "永庆坊社区党群服务中心",
+      "address": "多宝街18号",
+      "district": "荔湾区",
+      "longitude": 113.237659,
+      "latitude": 23.116373,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 22,
+      "branch_name": "广州永庆坊金声停车场(出入口)",
+      "address": "恩宁路265号(黄沙地铁站B口步行340米)",
+      "district": "荔湾区",
+      "longitude": 113.240912,
+      "latitude": 23.113771,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 23,
+      "branch_name": "永庆坊涉侨纠纷调解室",
+      "address": "丛桂路188号(黄沙地铁站B口步行220米)",
+      "district": "荔湾区",
+      "longitude": 113.240365,
+      "latitude": 23.112554,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 24,
+      "branch_name": "Fuggler永庆坊店",
+      "address": "永庆坊东区安土街75号",
+      "district": "荔湾区",
+      "longitude": 113.23958,
+      "latitude": 23.114473,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 25,
+      "branch_name": "永庆坊党群服务驿站",
+      "address": "恩宁路恩宁新街12号",
+      "district": "荔湾区",
+      "longitude": 113.238403,
+      "latitude": 23.114611,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 26,
+      "branch_name": "多宝街永庆坊社区颐康服务站",
+      "address": "多宝街18号一楼(长寿路地铁站D1口步行490米)",
+      "district": "荔湾区",
+      "longitude": 113.2377,
+      "latitude": 23.11635,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 27,
+      "branch_name": "永庆坊党群服务中心",
+      "address": "多宝街与恩宁路交叉口东140米",
+      "district": "荔湾区",
+      "longitude": 113.238891,
+      "latitude": 23.115874,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 28,
+      "branch_name": "SIMPLEMILL朴坊广州永庆坊店",
+      "address": "恩宁路157号-159号",
+      "district": "荔湾区",
+      "longitude": 113.23873,
+      "latitude": 23.114174,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 29,
+      "branch_name": "广州上下九步行街永庆坊宜致酒店",
+      "address": "多宝路127号(长寿路地铁站D出口右转300米)",
+      "district": "荔湾区",
+      "longitude": 113.237353,
+      "latitude": 23.116933,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 30,
+      "branch_name": "广州永庆坊瞻云精选酒店(黄沙地铁站店)",
+      "address": "恩宁路钟巷31号",
+      "district": "荔湾区",
+      "longitude": 113.238871,
+      "latitude": 23.114634,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 31,
+      "branch_name": "新斗记(永庆坊店)",
+      "address": "永庆坊恩宁路钟巷6号",
+      "district": "荔湾区",
+      "longitude": 113.238934,
+      "latitude": 23.114343,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 32,
+      "branch_name": "北胜堂(永庆坊·非遗街区)",
+      "address": "元和街62号",
+      "district": "荔湾区",
+      "longitude": 113.237764,
+      "latitude": 23.114857,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 33,
+      "branch_name": "广州永庆坊中山八地铁站亚朵酒店",
+      "address": "中山八路新虹街32号",
+      "district": "荔湾区",
+      "longitude": 113.234931,
+      "latitude": 23.126984,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 34,
+      "branch_name": "永庆坊梵花汉服写真馆(永庆坊店)",
+      "address": "恩宁路81号",
+      "district": "荔湾区",
+      "longitude": 113.237084,
+      "latitude": 23.115087,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 35,
+      "branch_name": "肯德基车速取餐点(永庆坊店)",
+      "address": "恩宁路永庆坊自编十二甫西街80、82号",
+      "district": "荔湾区",
+      "longitude": 113.239935,
+      "latitude": 23.113797,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 36,
+      "branch_name": "钟书阁(永庆坊店)",
+      "address": "恩宁路227号(永庆坊喜茶隔壁)",
+      "district": "荔湾区",
+      "longitude": 113.24029,
+      "latitude": 23.113658,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 37,
+      "branch_name": "永庆坊社区退役军人服务站",
+      "address": "多宝路18号",
+      "district": "荔湾区",
+      "longitude": 113.23766,
+      "latitude": 23.116358,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 38,
+      "branch_name": "广州市公安局荔湾区分局多宝派出所永庆坊社区警务室",
+      "address": "多宝街18号(永庆坊社区居委旁)",
+      "district": "荔湾区",
+      "longitude": 113.237701,
+      "latitude": 23.116391,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 39,
+      "branch_name": "HEA(广州永庆坊龙狮文创馆)",
+      "address": "恩宁路99号永庆坊一巷8号",
+      "district": "荔湾区",
+      "longitude": 113.237343,
+      "latitude": 23.115313,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 40,
+      "branch_name": "广州永庆坊金声停车场(出入口)",
+      "address": "恩宁路265号(黄沙地铁站B口步行350米)",
+      "district": "荔湾区",
+      "longitude": 113.240819,
+      "latitude": 23.113567,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 41,
+      "branch_name": "广州市荔湾区永庆坊消防救援站",
+      "address": "龙津西路313号",
+      "district": "荔湾区",
+      "longitude": 113.2398,
+      "latitude": 23.123464,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 42,
+      "branch_name": "OnADailyBasis-永庆坊店",
+      "address": "恩宁路永庆坊大地旧街26号C107号OnADailyBasis",
+      "district": "荔湾区",
+      "longitude": 113.241004,
+      "latitude": 23.114291,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 43,
+      "branch_name": "亚信四季饮(永庆坊店)",
+      "address": "永庆坊恩宁路149号",
+      "district": "荔湾区",
+      "longitude": 113.238505,
+      "latitude": 23.114202,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 44,
+      "branch_name": "永庆坊活化提升项目现场指挥部",
+      "address": "多宝路250号(长寿路地铁站D2口步行490米)",
+      "district": "荔湾区",
+      "longitude": 113.239493,
+      "latitude": 23.115729,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 45,
+      "branch_name": "凤小馆·顺德菜(永庆坊店)",
+      "address": "恩宁路永庆坊二期安土街46号",
+      "district": "荔湾区",
+      "longitude": 113.239456,
+      "latitude": 23.114561,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 46,
+      "branch_name": "美度国际酒店(永庆坊陈家祠地铁站店)",
+      "address": "龙津西路280号1楼",
+      "district": "荔湾区",
+      "longitude": 113.240581,
+      "latitude": 23.123418,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 47,
+      "branch_name": "永庆坊上下九民宿(广州沙面岛上下九广州西站店)",
+      "address": "十八甫西路与十八甫新街交叉口东100米",
+      "district": "荔湾区",
+      "longitude": 113.247703,
+      "latitude": 23.111773,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 48,
+      "branch_name": "圆运荟茶空间·荔枝红茶(永庆坊店)",
+      "address": "永庆坊永庆二街11号",
+      "district": "荔湾区",
+      "longitude": 113.237355,
+      "latitude": 23.11538,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 49,
+      "branch_name": "永庆坊近地铁带天台花园的高颜值出租屋美宿",
+      "address": "文昌北路与宝华北交叉口西北80米",
+      "district": "荔湾区",
+      "longitude": 113.243825,
+      "latitude": 23.117325,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 50,
+      "branch_name": "逢源路70号之一永庆坊温馨公寓",
+      "address": "逢源路与宝贤坊交叉口东北20米",
+      "district": "荔湾区",
+      "longitude": 113.23959,
+      "latitude": 23.118467,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 51,
+      "branch_name": "MASONPRINCE(永庆坊店)",
+      "address": "恩宁路永庆坊吉祥坊13号B103(1-3F)",
+      "district": "荔湾区",
+      "longitude": 113.240707,
+      "latitude": 23.113949,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 52,
+      "branch_name": "拼图酒店(广州永庆坊陈家祠地铁站店)",
+      "address": "中山八路16号中山八地铁站B出口",
+      "district": "荔湾区",
+      "longitude": 113.239419,
+      "latitude": 23.126208,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 53,
+      "branch_name": "DJI大疆(广州永庆坊授权体验店)",
+      "address": "恩宁路十一甫新街7号首层(黄沙地铁站B口步行360米)",
+      "district": "荔湾区",
+      "longitude": 113.240828,
+      "latitude": 23.113898,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 54,
+      "branch_name": "OLD ORDER(永庆坊店)",
+      "address": "恩宁路永庆坊大地旧街26号C106(L1-L2)",
+      "district": "荔湾区",
+      "longitude": 113.240982,
+      "latitude": 23.114143,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 55,
+      "branch_name": "BONELESS(广州永庆坊店)",
+      "address": "恩宁路永庆坊十二甫西街86号商铺",
+      "district": "荔湾区",
+      "longitude": 113.240182,
+      "latitude": 23.114019,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 56,
+      "branch_name": "雅明迪香氛(永庆坊店)",
+      "address": "永庆坊二巷14号",
+      "district": "荔湾区",
+      "longitude": 113.237487,
+      "latitude": 23.115556,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 57,
+      "branch_name": "Sanse(永庆坊店)",
+      "address": "恩宁路永庆坊吉祥段B102",
+      "district": "荔湾区",
+      "longitude": 113.240426,
+      "latitude": 23.113991,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 58,
+      "branch_name": "斌斌有礼(永庆坊)",
+      "address": "永庆二巷4号",
+      "district": "荔湾区",
+      "longitude": 113.237808,
+      "latitude": 23.115436,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 59,
+      "branch_name": "广彩茶室(永庆坊·非遗街区)",
+      "address": "元和街54号",
+      "district": "荔湾区",
+      "longitude": 113.23791,
+      "latitude": 23.114699,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 60,
+      "branch_name": "环逸酒店(广州永庆坊沙面岛店)",
+      "address": "黄沙大道28-30号(黄沙地铁站C口步行410米)",
+      "district": "荔湾区",
+      "longitude": 113.236858,
+      "latitude": 23.111604,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 61,
+      "branch_name": "隆凤凰饼铺(永庆坊二店)",
+      "address": "恩宁路243号(黄沙地铁站B口步行330米)",
+      "district": "荔湾区",
+      "longitude": 113.240806,
+      "latitude": 23.113399,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 62,
+      "branch_name": "隆凤凰饼铺(永庆坊一店)",
+      "address": "恩宁路99号",
+      "district": "荔湾区",
+      "longitude": 113.237321,
+      "latitude": 23.114826,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 63,
+      "branch_name": "愿百应许愿坊(永庆坊店)",
+      "address": "蓬莱路35号",
+      "district": "荔湾区",
+      "longitude": 113.237168,
+      "latitude": 23.113607,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 64,
+      "branch_name": "得闲坊民宿(广州荔湾湖公园永庆坊店)",
+      "address": "逢源北街与龙津西路交叉口西80米",
+      "district": "荔湾区",
+      "longitude": 113.235693,
+      "latitude": 23.119389,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 65,
+      "branch_name": "广州非遗街区(永庆坊)",
+      "address": "多宝街道恩宁路117号",
+      "district": "荔湾区",
+      "longitude": 113.237618,
+      "latitude": 23.114794,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 66,
+      "branch_name": "宝源美宿(永庆坊长寿路地铁站店)",
+      "address": "宝源路97号(长寿路地铁站D1口步行300米)",
+      "district": "荔湾区",
+      "longitude": 113.240285,
+      "latitude": 23.11883,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 67,
+      "branch_name": "金鹏宾馆(广州永庆坊陈家祠地铁站店)",
+      "address": "龙津西路319号(近富力广场、陈家祠地铁站)",
+      "district": "荔湾区",
+      "longitude": 113.240289,
+      "latitude": 23.12412,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 68,
+      "branch_name": "荔枝湾游船(永庆坊码头)",
+      "address": "恩宁路吉祥坊1号民居旁(黄沙地铁站B口步行490米)",
+      "district": "荔湾区",
+      "longitude": 113.239891,
+      "latitude": 23.114548,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 69,
+      "branch_name": "希尔酒店(广州永庆坊长寿路地铁站店)",
+      "address": "文昌南路50号",
+      "district": "荔湾区",
+      "longitude": 113.244707,
+      "latitude": 23.115026,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 70,
+      "branch_name": "艺龙安云酒店(广州永庆坊陈家祠地铁站店)",
+      "address": "龙津西路215号1层3层",
+      "district": "荔湾区",
+      "longitude": 113.237945,
+      "latitude": 23.122555,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 71,
+      "branch_name": "宜尚酒店(广州永庆坊上下九步行街店)",
+      "address": "华贵路3号(长寿路地铁站B口步行280米)",
+      "district": "荔湾区",
+      "longitude": 113.241581,
+      "latitude": 23.120923,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 72,
+      "branch_name": "YUNIK酒店(广州永庆坊中山八地铁站店)",
+      "address": "中山八路73号后座(中山八地铁站A口步行290米)",
+      "district": "荔湾区",
+      "longitude": 113.23542,
+      "latitude": 23.125186,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 73,
+      "branch_name": "如家商旅酒店(广州永庆坊荔湾湖公园店)",
+      "address": "黄沙大道144号大冶有色大厦F1层",
+      "district": "荔湾区",
+      "longitude": 113.231216,
+      "latitude": 23.11811,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 74,
+      "branch_name": "名澜美居(永庆坊黄沙地铁站店)",
+      "address": "多宝街道丛福里6号后座",
+      "district": "荔湾区",
+      "longitude": 113.239576,
+      "latitude": 23.111959,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 75,
+      "branch_name": "悦享家公寓(广州永庆坊上下九步行街店)",
+      "address": "文昌南路139号1楼(长寿路地铁站A口步行220米)",
+      "district": "荔湾区",
+      "longitude": 113.244284,
+      "latitude": 23.117513,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    }
+  ]
+}

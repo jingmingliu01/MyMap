@@ -1,0 +1,46 @@
+{
+  "name": "大良毋米粥",
+  "type": "place",
+  "branches": [
+    {
+      "id": 1,
+      "branch_name": "大良毋米粥·粥水火锅(珠江新城冼村店)",
+      "address": "金穗路72号盈嘉花园103号-201号",
+      "district": "天河区",
+      "longitude": 113.331757,
+      "latitude": 23.122527,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 2,
+      "branch_name": "大良毋米粥·粥水火锅(猎德店)",
+      "address": "珠江新城海文路20号",
+      "district": "天河区",
+      "longitude": 113.336789,
+      "latitude": 23.115179,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 3,
+      "branch_name": "大良毋米粥·粥水火锅(广州东站店)",
+      "address": "林和西路153号保利中汇大厦C座4-5层",
+      "district": "天河区",
+      "longitude": 113.323576,
+      "latitude": 23.148543,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 4,
+      "branch_name": "大良毋米粥·粥水火锅(四海城商业广场店)",
+      "address": "汉溪大道东390号四海城商业广场东区1栋三层301",
+      "district": "番禺区",
+      "longitude": 113.352676,
+      "latitude": 23.007542,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    }
+  ]
+}

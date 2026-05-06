@@ -1,0 +1,326 @@
+{
+  "name": "点都德",
+  "type": "restaurant",
+  "branches": [
+    {
+      "id": 1,
+      "branch_name": "(白云万达店)",
+      "address": "云城东路501号万达广场3层点都德(2号门电梯直上三楼)",
+      "district": "白云区",
+      "longitude": 113.267714,
+      "latitude": 23.173432,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 2,
+      "branch_name": "(金满楼店)",
+      "address": "石井街石槎路32号B栋3楼",
+      "district": "白云区",
+      "longitude": 113.242495,
+      "latitude": 23.200465,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 3,
+      "branch_name": "(金域蓝湾店)",
+      "address": "中粮万科·金域蓝湾3期南1门西120米",
+      "district": "白云区",
+      "longitude": 113.211786,
+      "latitude": 23.155094,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 4,
+      "branch_name": "(汇盈广场店)",
+      "address": "市桥街捷进二路1号三楼",
+      "district": "番禺区",
+      "longitude": 113.360292,
+      "latitude": 22.950529,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 5,
+      "branch_name": "(永旺梦乐城店)",
+      "address": "亚运大道1号番禺永旺梦乐城4F层4002",
+      "district": "番禺区",
+      "longitude": 113.388003,
+      "latitude": 22.937857,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 6,
+      "branch_name": "(长隆店)",
+      "address": "汉溪大道东时代E-PARK二楼(星巴克旁)",
+      "district": "番禺区",
+      "longitude": 113.333367,
+      "latitude": 22.995176,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 7,
+      "branch_name": "(昌岗店)",
+      "address": "昌岗中路238号达镖国际中心二层(步梯3楼电梯2楼)地铁2号线和8号线昌岗站E口方向第一个左转出口",
+      "district": "海珠区",
+      "longitude": 113.276536,
+      "latitude": 23.089536,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 8,
+      "branch_name": "(海燕楼)",
+      "address": "工业大道361号二楼",
+      "district": "海珠区",
+      "longitude": 113.273659,
+      "latitude": 23.074272,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 9,
+      "branch_name": "(海珠万达广场店)",
+      "address": "逸景路238号海珠万达广场5楼",
+      "district": "海珠区",
+      "longitude": 113.313591,
+      "latitude": 23.083354,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 10,
+      "branch_name": "有礼(汇礼轩店)",
+      "address": "汇礼轩(广州塔地铁站出入口步行270米)",
+      "district": "海珠区",
+      "longitude": 113.325062,
+      "latitude": 23.105971,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 11,
+      "branch_name": "(花都店)",
+      "address": "新华街建设北路72号星光汇广场摩登百货5层",
+      "district": "花都区",
+      "longitude": 113.204789,
+      "latitude": 23.386128,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 12,
+      "branch_name": "(萝岗万达店)",
+      "address": "萝岗万达广场4楼地铁6号线苏元D出口",
+      "district": "黄埔区",
+      "longitude": 113.4668,
+      "latitude": 23.169346,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 13,
+      "branch_name": "(南岗店)",
+      "address": "盛凯大街2号101房L2-1铺",
+      "district": "黄埔区",
+      "longitude": 113.548843,
+      "latitude": 23.102292,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 14,
+      "branch_name": "(大茶楼店)",
+      "address": "龙津中路587-589号(近地铁1/8号线陈家祠站B口中国银行右转20米)",
+      "district": "荔湾区",
+      "longitude": 113.246339,
+      "latitude": 23.123471,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 15,
+      "branch_name": "(荔红楼)",
+      "address": "黄沙大道144号大冶有色大厦二楼",
+      "district": "荔湾区",
+      "longitude": 113.231403,
+      "latitude": 23.117959,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 16,
+      "branch_name": "(南沙环宇城店)",
+      "address": "凤凰大道与黄阁南路交叉口西北角南沙环宇城L2层L213铺",
+      "district": "南沙区",
+      "longitude": 113.519806,
+      "latitude": 22.789816,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 17,
+      "branch_name": "(毕德寮)",
+      "address": "华夏路30号富力盈通大厦四楼401-409房",
+      "district": "天河区",
+      "longitude": 113.321781,
+      "latitude": 23.125766,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 18,
+      "branch_name": "(东圃店)",
+      "address": "中山大道中443号康盛大厦3-4层",
+      "district": "天河区",
+      "longitude": 113.405168,
+      "latitude": 23.121458,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 19,
+      "branch_name": "(和兴楼)",
+      "address": "林和中路148号嘉逸豪庭酒店2层",
+      "district": "天河区",
+      "longitude": 113.326968,
+      "latitude": 23.145732,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 20,
+      "branch_name": "(汇点楼)",
+      "address": "珠江新城花城大道86号高德汇2座4楼",
+      "district": "天河区",
+      "longitude": 113.330928,
+      "latitude": 23.11803,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 21,
+      "branch_name": "(汇胜楼店)",
+      "address": "天河路598号百脑汇大厦四层",
+      "district": "天河区",
+      "longitude": 113.338868,
+      "latitude": 23.134276,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 22,
+      "branch_name": "(金融城汇金中心店)",
+      "address": "黄埔大道中656号302-304房",
+      "district": "天河区",
+      "longitude": 113.380197,
+      "latitude": 23.117852,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 23,
+      "branch_name": "(天河北店)",
+      "address": "天河北路620号",
+      "district": "天河区",
+      "longitude": 113.340305,
+      "latitude": 23.140893,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 24,
+      "branch_name": "(天河公园店)",
+      "address": "中山大道西160号东方新世界广场F4层",
+      "district": "天河区",
+      "longitude": 113.359392,
+      "latitude": 23.133741,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 25,
+      "branch_name": "(白云山景区南门店)",
+      "address": "云泉路163号之一三层自编301-302-307-308-309-310号商铺",
+      "district": "越秀区",
+      "longitude": 113.297205,
+      "latitude": 23.160079,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 26,
+      "branch_name": "(北京路贰店)",
+      "address": "北京路352、354号",
+      "district": "越秀区",
+      "longitude": 113.268955,
+      "latitude": 23.126571,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 27,
+      "branch_name": "(北京路壹店)",
+      "address": "中山四路246号信德大厦主楼五楼全层",
+      "district": "越秀区",
+      "longitude": 113.271378,
+      "latitude": 23.126218,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 28,
+      "branch_name": "(德粤楼店)",
+      "address": "环市东路374号三茂大酒店三楼",
+      "district": "越秀区",
+      "longitude": 113.2881,
+      "latitude": 23.135045,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 29,
+      "branch_name": "(聚福楼)",
+      "address": "惠福东路470号",
+      "district": "越秀区",
+      "longitude": 113.265327,
+      "latitude": 23.120454,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 30,
+      "branch_name": "(流花展贸中心店)",
+      "address": "流花路117号流花展贸中心1号馆3楼(越秀公园站c出口)",
+      "district": "越秀区",
+      "longitude": 113.258441,
+      "latitude": 23.14125,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 31,
+      "branch_name": "(喜粤楼)",
+      "address": "中山一路57号",
+      "district": "越秀区",
+      "longitude": 113.308637,
+      "latitude": 23.12761,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 32,
+      "branch_name": "(星寰店)",
+      "address": "侨光西路11号五层",
+      "district": "越秀区",
+      "longitude": 113.264038,
+      "latitude": 23.113551,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "脆鲩人家",
+  "type": "place",
+  "branches": [
+    {
+      "id": 1,
+      "branch_name": "脆鲩人家(护林路店)",
+      "address": "珠吉街道黄村东路30号珠村市场",
+      "district": "天河区",
+      "longitude": 113.425147,
+      "latitude": 23.117187,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 2,
+      "branch_name": "脆鲩人家(天河店)",
+      "address": "华观路1933号万科云城A栋A110-114号",
+      "district": "天河区",
+      "longitude": 113.402119,
+      "latitude": 23.169062,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 3,
+      "branch_name": "脆鲩人家(增城旗舰店)",
+      "address": "增富宁路52号金大田门业东侧约二十米处",
+      "district": "增城区",
+      "longitude": 113.827793,
+      "latitude": 23.299204,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    },
+    {
+      "id": 4,
+      "branch_name": "脆鲩人家(利丰大厦-南塔店)",
+      "address": "青年路利丰大厦首层(夏港地铁站C口步行210米)",
+      "district": "黄埔区",
+      "longitude": 113.526361,
+      "latitude": 23.065391,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    }
+  ]
+}

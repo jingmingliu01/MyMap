@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.DS_Store
+docs/
+data/*.preview.json
+output/*.png
+output/*.jpg
+output/*.jpeg

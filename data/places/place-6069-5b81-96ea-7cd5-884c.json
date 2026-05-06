@@ -1,0 +1,16 @@
+{
+  "name": "恩宁雪糕行",
+  "type": "place",
+  "branches": [
+    {
+      "id": 1,
+      "branch_name": "恩宁雪糕行",
+      "address": "恩宁路69号",
+      "district": "荔湾区",
+      "longitude": 113.236929,
+      "latitude": 23.11517,
+      "coordinate_system": "GCJ-02",
+      "map_provider": "amap"
+    }
+  ]
+}
