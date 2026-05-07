@@ -23,7 +23,7 @@ declare global {
     _AMapSecurityConfig?: {
       securityJsCode?: string;
     };
-    __GUANGZHOU_MAP__?: {
+    __MYMAP__?: {
       ready: boolean;
       markerCount: number;
       error?: string;

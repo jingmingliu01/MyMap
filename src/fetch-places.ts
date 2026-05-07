@@ -11,7 +11,9 @@ interface AmapPoi {
   address?: string | string[];
   adname?: string;
   cityname?: string | string[];
+  citycode?: string;
   pname?: string;
+  adcode?: string;
   location?: string;
 }
 
@@ -22,22 +24,10 @@ interface AmapPoiResponse {
   pois?: AmapPoi[];
 }
 
-const GUANGZHOU_DISTRICTS = new Set([
-  "越秀区",
-  "海珠区",
-  "荔湾区",
-  "天河区",
-  "白云区",
-  "黄埔区",
-  "番禺区",
-  "花都区",
-  "南沙区",
-  "从化区",
-  "增城区"
-]);
-
 const DEFAULT_PAGE_SIZE = 25;
 const DEFAULT_MAX_PAGES = 3;
+const DEFAULT_MAX_REQUEST_ATTEMPTS = 3;
+const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
 
 async function main() {
   const apiKey = process.env.AMAP_WEB_SERVICE_KEY;
@@ -54,9 +44,10 @@ async function main() {
 
   for (const item of seed.items) {
     const pois = await searchAllPages(apiKey, seed.city, item);
-    const branches = normalizeBranches(pois);
+    const branches = normalizeBranches(pois, seed.city);
     const group: PlaceGroup = {
       name: item,
+      city: seed.city,
       type: "place",
       branches
     };
@@ -69,10 +60,10 @@ async function main() {
 
 function validateSeed(seed: SeedFile, seedPath: string) {
   if (!seed || typeof seed.city !== "string" || !Array.isArray(seed.items)) {
-    throw new Error(`${seedPath} must match { "city": "广州", "items": ["..."] }`);
+    throw new Error(`${seedPath} must match { "city": "城市名", "items": ["..."] }`);
   }
-  if (seed.city !== "广州") {
-    throw new Error(`This MVP is scoped to 广州, but ${seedPath} has city=${JSON.stringify(seed.city)}.`);
+  if (!seed.city.trim()) {
+    throw new Error(`${seedPath} city must be a non-empty string.`);
   }
   if (seed.items.some((item) => typeof item !== "string" || !item.trim())) {
     throw new Error(`${seedPath} items must be non-empty strings.`);
@@ -94,12 +85,7 @@ async function searchAllPages(apiKey: string, city: string, keyword: string): Pr
     });
 
     const url = `https://restapi.amap.com/v5/place/text?${params.toString()}`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`AMap POI request failed for ${keyword}, page ${page}: HTTP ${response.status}`);
-    }
-
-    const payload = (await response.json()) as AmapPoiResponse;
+    const payload = await fetchAmapJson(url, keyword, page);
     if (payload.status !== "1") {
       throw new Error(`AMap POI request failed for ${keyword}, page ${page}: ${payload.info}`);
     }
@@ -115,14 +101,46 @@ async function searchAllPages(apiKey: string, city: string, keyword: string): Pr
   return results;
 }
 
-function toCityRegion(city: string): string {
-  return city.endsWith("市") ? city : `${city}市`;
+async function fetchAmapJson(url: string, keyword: string, page: number): Promise<AmapPoiResponse> {
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= DEFAULT_MAX_REQUEST_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), DEFAULT_REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return (await response.json()) as AmapPoiResponse;
+    } catch (error) {
+      lastError = error;
+      if (attempt < DEFAULT_MAX_REQUEST_ATTEMPTS) {
+        await delay(350 * attempt);
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw new Error(`AMap POI request failed for ${keyword}, page ${page}: ${messageFromError(lastError)}`);
 }
 
-function normalizeBranches(pois: AmapPoi[]): PlaceBranch[] {
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function toCityRegion(city: string): string {
+  const trimmed = city.trim();
+  if (/^\d+$/.test(trimmed)) {
+    return trimmed;
+  }
+  return trimmed.endsWith("市") ? trimmed : `${trimmed}市`;
+}
+
+function normalizeBranches(pois: AmapPoi[], city: string): PlaceBranch[] {
   const seen = new Set<string>();
   const branches: Omit<PlaceBranch, "id">[] = [];
-  const cityPois = pois.filter((poi) => parseLocation(poi.location) && isInGuangzhou(poi));
+  const cityPois = pois.filter((poi) => parseLocation(poi.location) && isInRequestedCity(poi, city));
 
   for (const poi of cityPois) {
     const location = parseLocation(poi.location);
@@ -174,12 +192,27 @@ function parseLocation(location: string | undefined) {
   return { longitude, latitude };
 }
 
-function isInGuangzhou(poi: AmapPoi): boolean {
-  const cityName = normalizeText(poi.cityname);
-  const provinceName = poi.pname?.trim() ?? "";
-  const district = poi.adname?.trim() ?? "";
+function isInRequestedCity(poi: AmapPoi, city: string): boolean {
+  const requested = city.trim();
+  const cityName = normalizeCityName(normalizeText(poi.cityname));
+  const requestedName = normalizeCityName(requested);
 
-  return cityName.includes("广州") || (provinceName === "广东省" && GUANGZHOU_DISTRICTS.has(district));
+  if (/^\d+$/.test(requested)) {
+    const citycode = normalizeText(poi.citycode);
+    const adcode = normalizeText(poi.adcode);
+    if (citycode && citycode === requested) {
+      return true;
+    }
+    if (adcode && requested.length === 6) {
+      return adcode.slice(0, 4) === requested.slice(0, 4);
+    }
+  }
+
+  return Boolean(cityName && requestedName && (cityName === requestedName || cityName.includes(requestedName) || requestedName.includes(cityName)));
+}
+
+function normalizeCityName(value: string): string {
+  return value.trim().replace(/市$/, "").toLowerCase();
 }
 
 function normalizeText(value: string | string[] | undefined): string {
@@ -187,6 +220,10 @@ function normalizeText(value: string | string[] | undefined): string {
     return value.join("");
   }
   return value?.trim() ?? "";
+}
+
+function messageFromError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 main().catch((error) => {

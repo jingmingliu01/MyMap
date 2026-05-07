@@ -18,8 +18,23 @@ export interface PlaceBranch {
 
 export interface PlaceGroup {
   name: string;
+  city: string;
   type: PlaceType;
   branches: PlaceBranch[];
+}
+
+export interface PlaceSelectionFile {
+  source_place_file: string;
+  source_hash: string;
+  prompt_hash: string;
+  provider: string;
+  model: string;
+  name: string;
+  city: string;
+  group_type: PlaceType;
+  selected_branch_ids: number[];
+  rejected_branch_ids: number[];
+  notes: string;
 }
 
 export interface MapPoint {

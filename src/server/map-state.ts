@@ -59,13 +59,16 @@ export async function writePreviewRoutes(routes: MapRoutesFile) {
 }
 
 export async function applyPreview() {
-  if (!existsSync(PREVIEW_POINTS_PATH)) {
+  const hasPointPreview = existsSync(PREVIEW_POINTS_PATH);
+  const hasRoutePreview = existsSync(PREVIEW_ROUTES_PATH);
+  if (!hasPointPreview && !hasRoutePreview) {
     throw new Error("No preview exists. Ask the AI for an edit before applying.");
   }
 
-  const previewPoints = await readJson<MapPointsFile>(PREVIEW_POINTS_PATH);
-  const previewRoutes = existsSync(PREVIEW_ROUTES_PATH) ? await readJson<MapRoutesFile>(PREVIEW_ROUTES_PATH) : { routes: [] };
-  const normalized = normalizeAppliedMapState(previewPoints, previewRoutes);
+  await ensureStateFiles();
+  const mapState = hasPointPreview ? await readJson<MapPointsFile>(PREVIEW_POINTS_PATH) : await readJson<MapPointsFile>(CURRENT_POINTS_PATH);
+  const routes = hasRoutePreview ? await readJson<MapRoutesFile>(PREVIEW_ROUTES_PATH) : await readJson<MapRoutesFile>(ROUTES_PATH);
+  const normalized = normalizeAppliedMapState(mapState, routes);
 
   await writeJson(CURRENT_POINTS_PATH, normalized.mapState);
   await writeJson(LEGACY_POINTS_PATH, normalized.mapState);
@@ -85,33 +88,35 @@ async function clearPreview() {
   await Promise.all([rm(PREVIEW_POINTS_PATH, { force: true }), rm(PREVIEW_ROUTES_PATH, { force: true })]);
 }
 
-function normalizeAppliedMapState(mapState: MapPointsFile, routes: MapRoutesFile): { mapState: MapPointsFile; routes: MapRoutesFile } {
+export function normalizeAppliedMapState(mapState: MapPointsFile, routes: MapRoutesFile): { mapState: MapPointsFile; routes: MapRoutesFile } {
   const idMap = new Map<string, string>();
   const nextBranchIdByGroup = new Map<string, number>();
-  const normalizedPoints = mapState.points.map((point) => {
+  const normalizedPoints = mapState.points.flatMap((point) => {
     if (point.visible === false) {
-      return point;
+      return [];
     }
-
     const nextBranchId = nextBranchIdByGroup.get(point.group_name) ?? 1;
     nextBranchIdByGroup.set(point.group_name, nextBranchId + 1);
     const nextId = `${slugify(point.group_name)}-${nextBranchId}`;
     idMap.set(point.id, nextId);
 
-    return {
-      ...point,
-      id: nextId,
-      branch_id: nextBranchId,
-      label: String(nextBranchId),
-      visible: true
-    };
+    return [
+      {
+        ...point,
+        id: nextId,
+        branch_id: nextBranchId,
+        label: String(nextBranchId),
+        visible: true
+      }
+    ];
   });
+  const visibleIds = new Set(normalizedPoints.map((point) => point.id));
 
   const normalizedRoutes = {
     routes: routes.routes
       .map((route) => ({
         ...route,
-        point_ids: route.point_ids.map((pointId) => idMap.get(pointId) ?? pointId)
+        point_ids: unique(route.point_ids.map((pointId) => idMap.get(pointId)).filter((pointId): pointId is string => Boolean(pointId && visibleIds.has(pointId))))
       }))
       .filter((route) => route.point_ids.length >= 2)
   };

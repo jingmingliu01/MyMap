@@ -18,7 +18,7 @@ export function getLlmConfig(): LlmConfig {
   const provider = resolveProvider();
 
   if (provider === "deepseek") {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       throw new Error("Missing DEEPSEEK_API_KEY. Set it in .env before using LLM workflows.");
     }
@@ -26,8 +26,8 @@ export function getLlmConfig(): LlmConfig {
     return {
       provider,
       apiKey,
-      baseURL: process.env.DEEPSEEK_BASE_URL || process.env.OPENAI_BASE_URL || DEFAULT_DEEPSEEK_BASE_URL,
-      model: process.env.deepseek_model || process.env.openai_model || process.env.LLM_MODEL || DEFAULT_DEEPSEEK_MODEL,
+      baseURL: process.env.DEEPSEEK_BASE_URL || DEFAULT_DEEPSEEK_BASE_URL,
+      model: process.env.deepseek_model || process.env.LLM_MODEL || DEFAULT_DEEPSEEK_MODEL,
       reasoningEffort: process.env.DEEPSEEK_REASONING_EFFORT === "max" ? "max" : "high"
     };
   }

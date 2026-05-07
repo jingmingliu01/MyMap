@@ -8,9 +8,10 @@
     "start": "node scripts/run.mjs",
     "fetch:places": "tsx src/fetch-places.ts",
     "merge:points": "tsx src/merge-points.ts",
-    "dev": "next dev --hostname 127.0.0.1",
+    "dev": "next dev --hostname 127.0.0.1 --port 5173",
     "build": "next build",
-    "check": "tsc --noEmit && next build",
+    "check": "tsc --noEmit && npm run test && next build",
+    "test": "tsx --test \"src/**/*.test.ts\"",
     "screenshot": "tsx src/screenshot.ts"
   },
   "devDependencies": {

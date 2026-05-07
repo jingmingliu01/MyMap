@@ -1,144 +1,49 @@
 # MyMap
 
-MyMap is an **AI Agent in workflow** project for turning a tiny travel seed file into a clean, interactive Guangzhou map.
+MyMap turns a tiny list of place names into an AI-assisted travel map.
 
-It combines AMap POI search, structured JSON generation, an AI-assisted editing workflow, a Next.js + React map UI, and Playwright screenshots. The core idea is simple: keep the map as inspectable JSON, then let an agent use narrow tools to preview route and point edits before the user applies them.
-
-```text
-seed.json -> AMap POI search -> places JSON -> LLM candidate filtering
-          -> map-state JSON -> AMap JS rendering -> AI tool previews -> PNG screenshot
-```
-
-## Highlights
-
-- Minimal JSON seed input for places such as restaurants, attractions, malls, cafes, and landmarks.
-- AMap Web Service POI search for Guangzhou candidates.
-- DeepSeek V4 Flash candidate filtering during merge by default.
-- OpenAI-compatible Chat Completions support, including OpenAI API fallback.
-- Chat Completions tool-calling agent for map editing workflows.
-- Preview-first edits: AI changes are shown first, then applied only after user confirmation.
-- Next.js App Router with Route Handlers for local API endpoints.
-- Separate JSON state for generated points, current editable points, route previews, and applied routes.
-- AMap JS API rendering with custom colored markers and route overlays.
-- Playwright screenshot export for downstream Excalidraw layout work.
-
-## Current Integrations
-
-### AMap
-
-MyMap currently supports AMap for POI search and map rendering.
-
-- Web Service POI search endpoint used by this project: `https://restapi.amap.com/v5/place/text`
-- JS API loader used by this project: `https://webapi.amap.com/maps?v=2.0&key=YOUR_KEY`
-- AMap Web Service POI search docs: [AMap POI Search](https://lbs.amap.com/api/webservice/guide/api-advanced/search)
-- AMap JavaScript API v2 docs: [AMap JS API v2](https://lbs.amap.com/api/javascript-api-v2/summary)
-- AMap key console: [AMap Console](https://console.amap.com/dev/key/app)
-
-### DeepSeek
-
-MyMap now defaults to DeepSeek V4 Flash for LLM workflows.
-
-- Chat Completions base URL: `https://api.deepseek.com`
-- Default model: `deepseek-v4-flash`
-- Thinking mode: enabled by default with `reasoning_effort: "high"` and `thinking.type: "enabled"`
-- DeepSeek thinking mode guide: [DeepSeek Thinking Mode](https://api-docs.deepseek.com/zh-cn/guides/thinking_mode)
-- DeepSeek model page: [DeepSeek Models and Pricing](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
-- DeepSeek platform: [DeepSeek Platform](https://platform.deepseek.com)
-
-### OpenAI
-
-MyMap also supports OpenAI API as an optional fallback by setting `LLM_PROVIDER=openai`.
-
-- Chat Completions endpoint: `https://api.openai.com/v1/chat/completions`
-- OpenAI API reference: [Chat Completions](https://platform.openai.com/docs/api-reference/chat/create)
-- OpenAI API key page: [API Keys](https://platform.openai.com/api-keys)
-
-The local agent uses Chat Completions `messages` plus `tools`, which keeps the design close to OpenAI-compatible providers.
-
-## How It Works
-
-### 1. Seed
-
-Edit `data/seeds.json`:
+You write a seed file like this:
 
 ```json
 {
   "city": "广州",
-  "items": [
-    "陶陶居",
-    "点都德",
-    "广州塔",
-    "陈家祠"
-  ]
+  "items": ["海心桥", "永庆坊", "利苑酒家", "太古汇"]
 }
 ```
 
-### 2. Fetch POI Candidates
+Then MyMap:
 
-```bash
-npm run fetch:places
-```
-
-This calls AMap Web Service POI search and writes one candidate file per seed item:
-
-```text
-data/places/*.json
-```
-
-These files are local generated caches and are ignored by Git.
-
-### 3. Merge Map Points
-
-```bash
-npm run merge:points
-```
-
-This uses the configured LLM provider to filter noisy POI candidates and writes:
+1. searches POI candidates with AMap Web Service,
+2. asks an LLM to filter noisy candidates,
+3. writes clean JSON map state,
+4. renders the points and routes with AMap JS API,
+5. lets you preview AI edits before applying them,
+6. exports a PNG screenshot for Excalidraw or other layout tools.
 
 ```text
-data/map-points.generated.json
-data/map-state.json
-data/routes.json
+data/seeds.json
+  -> data/places/*.json
+  -> data/selections/*.selection.json
+  -> data/map-state.json
+  -> Next.js map UI
+  -> output/mymap.png
 ```
 
-### 4. Edit With AI Agent
+## Preview
 
-```bash
-npm run dev
-```
+![MyMap interactive map editor](assets/readme/map-editor.png)
 
-Open:
+## What Works Today
 
-```text
-http://127.0.0.1:5173/app/index.html
-```
-
-The map page includes an AI editor. The agent uses narrow tool calls:
-
-- `read_routes_json`
-- `edit_routes_json`
-- `read_map_points_json`
-- `edit_map_points_json`
-
-Route-only requests touch only route preview JSON. Point filtering requests touch point-state preview JSON. Nothing is applied until the user clicks `应用`.
-
-### 5. Screenshot
-
-```bash
-npm run screenshot
-```
-
-Default output:
-
-```text
-output/guangzhou-map.png
-```
-
-Default size is `1920x1080`:
-
-```bash
-npm run screenshot -- --width 2560 --height 1440 --output output/guangzhou-map-2k.png
-```
+- City comes from `data/seeds.json`; it is not hard-coded to Guangzhou.
+- AMap POI search uses `region=<seed.city>` with `city_limit=true`.
+- Each fetched place group stores its `city`, candidate branches, addresses, districts, and GCJ-02 coordinates.
+- LLM selection runs per place group and caches results under `data/selections/`.
+- DeepSeek V4 Flash is the default LLM provider.
+- OpenAI Chat Completions is supported by setting `LLM_PROVIDER=openai`.
+- The browser map supports group filters, route filters, AI preview, apply, and revert.
+- Route-only previews and point-only previews are both supported.
+- Screenshots are generated with Playwright.
 
 ## Quick Start
 
@@ -148,28 +53,79 @@ npm start
 
 The interactive script will:
 
-1. Ask for API keys.
-2. Write `.env`.
-3. Install dependencies.
-4. Create `data/seeds.json` from `data/seeds.example.json` if needed.
-5. Fetch AMap POI candidates.
-6. Merge and filter map points with the configured LLM provider.
-7. Start the local map server.
+1. ask for API keys,
+2. write `.env`,
+3. install dependencies,
+4. create `data/seeds.json` from `data/seeds.example.json` if needed,
+5. fetch POI candidates,
+6. run LLM candidate selection,
+7. start the local map at [http://127.0.0.1:5173/](http://127.0.0.1:5173/).
 
-## Environment Variables
+After the sample works, edit `data/seeds.json` and rerun `npm start`.
 
-Copy `.env.example`:
+## Manual Workflow
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Fetch POI candidates:
+
+```bash
+npm run fetch:places
+```
+
+Merge selected map points:
+
+```bash
+npm run merge:points
+```
+
+Start the map UI:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/
+```
+
+Export a screenshot:
+
+```bash
+npm run screenshot
+```
+
+Custom screenshot:
+
+```bash
+npm run screenshot -- --width 2560 --height 1440 --output output/my-trip-map.png
+```
+
+## Environment
+
+Copy the example file:
 
 ```bash
 cp .env.example .env
 ```
 
-Required:
+Required for AMap:
 
 ```bash
 AMAP_WEB_SERVICE_KEY=your_amap_web_service_key
 AMAP_JS_API_KEY=your_amap_js_api_key
 AMAP_JS_API_SECURITY_JS_CODE=your_amap_js_api_security_js_code
+```
+
+Default LLM provider:
+
+```bash
 LLM_PROVIDER=deepseek
 DEEPSEEK_API_KEY=your_deepseek_api_key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
@@ -177,44 +133,79 @@ deepseek_model=deepseek-v4-flash
 DEEPSEEK_REASONING_EFFORT=high
 ```
 
-Optional:
+OpenAI fallback:
 
 ```bash
+LLM_PROVIDER=openai
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_BASE_URL=
 openai_model=gpt-5.5
 ```
 
+## API Links
+
+AMap:
+
+- Web Service POI endpoint: `https://restapi.amap.com/v5/place/text`
+- JS API loader: `https://webapi.amap.com/maps?v=2.0&key=YOUR_KEY`
+- POI search docs: [AMap POI Search](https://lbs.amap.com/api/webservice/guide/api-advanced/search)
+- JavaScript API v2 docs: [AMap JS API v2](https://lbs.amap.com/api/javascript-api-v2/summary)
+- Key console: [AMap Console](https://console.amap.com/dev/key/app)
+
+DeepSeek:
+
+- Base URL: `https://api.deepseek.com`
+- Thinking mode guide: [DeepSeek Thinking Mode](https://api-docs.deepseek.com/zh-cn/guides/thinking_mode)
+- Platform: [DeepSeek Platform](https://platform.deepseek.com)
+
+OpenAI:
+
+- Chat Completions endpoint: `https://api.openai.com/v1/chat/completions`
+- API reference: [Chat Completions](https://platform.openai.com/docs/api-reference/chat/create)
+- API keys: [OpenAI API Keys](https://platform.openai.com/api-keys)
+
+## Data Files
+
+User input:
+
+```text
+data/seeds.json
+```
+
+Generated local state:
+
+```text
+data/places/*.json
+data/selections/*.selection.json
+data/map-points.generated.json
+data/map-points.json
+data/map-state.json
+data/routes.json
+data/*.preview.json
+output/*.png
+```
+
+These generated files are ignored by Git. Keep `data/seeds.example.json` as the shareable template.
+
 ## Scripts
 
 ```bash
+npm start              # One-command interactive workflow
 npm run fetch:places   # Query AMap POI candidates
-npm run merge:points   # Filter and merge candidates into map JSON
-npm run dev            # Start local Next.js app and API routes
-npm run screenshot     # Export output/guangzhou-map.png
-npm run check          # Type-check and build
-```
-
-## Data Model
-
-```text
-data/seeds.json                  # User input
-data/places/*.json               # AMap candidate cache
-data/map-points.generated.json    # Generated baseline
-data/map-state.json               # Current editable map state
-data/map-state.preview.json       # AI point edit preview
-data/routes.json                  # Applied route overlays
-data/routes.preview.json          # AI route preview
+npm run merge:points   # LLM selection + deterministic merge
+npm run dev            # Start Next.js on 127.0.0.1:5173
+npm run screenshot     # Export output/mymap.png
+npm run test           # Run focused state-model tests
+npm run check          # Type-check, test, and build
 ```
 
 ## Current Limits
 
-- The MVP is scoped to Guangzhou.
-- Place results need human review; AMap can return duplicates, closed places, nearby facilities, or ambiguous branch names.
-- Coordinates come from AMap and use `GCJ-02`.
-- Route overlays are straight polylines by point id; real walking/driving route geometry is not implemented yet.
+- POI results still need human review.
+- Coordinates come from the active map provider; AMap coordinates are GCJ-02.
+- Route overlays are straight lines between selected point IDs. Real walking/driving route geometry is not implemented yet.
 - Excalidraw is a downstream layout tool; this repo exports PNG screenshots but does not generate Excalidraw files.
-- Images, ratings, multi-day itinerary planning, and recommendation cards are intentionally out of scope for the first version.
+- Images, ratings, multi-day itinerary planning, and recommendation cards are intentionally out of scope for the MVP.
 
 ## License
 

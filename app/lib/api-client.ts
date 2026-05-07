@@ -8,9 +8,20 @@ export async function apiPost<T>(url: string, body: unknown): Promise<T> {
 }
 
 async function parseApiResponse<T>(response: Response): Promise<T> {
-  const payload = (await response.json()) as T & { error?: string };
-  if (!response.ok) {
-    throw new Error(payload.error || `HTTP ${response.status}`);
+  const text = await response.text();
+  let payload: (T & { error?: string }) | null = null;
+  if (text) {
+    try {
+      payload = JSON.parse(text) as T & { error?: string };
+    } catch {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${text.slice(0, 160)}`);
+      }
+      throw new Error("API returned invalid JSON.");
+    }
   }
-  return payload;
+  if (!response.ok) {
+    throw new Error(payload?.error || `HTTP ${response.status}`);
+  }
+  return payload as T;
 }

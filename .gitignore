@@ -6,7 +6,12 @@ tsconfig.tsbuildinfo
 .DS_Store
 docs/
 data/*.preview.json
+data/map-points.generated.json
+data/map-points.json
+data/map-state.json
+data/routes.json
 data/places/*.json
+data/selections/*.json
 output/*.png
 output/*.jpg
 output/*.jpeg

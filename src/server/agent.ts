@@ -190,9 +190,18 @@ export async function createAiPreview(message: string, messages: ChatMessage[]) 
       const functionToolCall = toolCall as ChatCompletionMessageFunctionToolCall;
       const toolName = functionToolCall.function.name;
       const handler = toolHandlers[toolName];
-      const args = parseToolArguments(functionToolCall.function.arguments);
-      const result = handler ? await handler(args) : { ok: false, message: `Unknown tool: ${toolName}` };
-      console.log(`[agent tool] ${toolName} ${JSON.stringify(args)} -> ${result.ok ? "ok" : "error"}: ${result.message}`);
+      let result: ToolResult;
+      try {
+        const args = parseToolArguments(functionToolCall.function.arguments);
+        result = handler ? await handler(args) : { ok: false, message: `Unknown tool: ${toolName}` };
+        console.log(`[agent tool] ${toolName} ${JSON.stringify(args)} -> ${result.ok ? "ok" : "error"}: ${result.message}`);
+      } catch (error) {
+        result = {
+          ok: false,
+          message: `Tool call failed: ${messageFromError(error)}`
+        };
+        console.log(`[agent tool] ${toolName} -> error: ${result.message}`);
+      }
       agentMessages.push({
         role: "tool",
         tool_call_id: toolCall.id,
@@ -314,4 +323,8 @@ function parseToolArguments(argumentsJson: string): Record<string, unknown> {
   }
 
   return parsed as Record<string, unknown>;
+}
+
+function messageFromError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

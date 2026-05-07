@@ -134,22 +134,26 @@ export function MapCanvas({
             : overlays;
         mapRef.current.setFitView(fitTargets.length > 0 ? fitTargets : overlays, false, routePadding, 16);
         onStatus("");
-        window.__GUANGZHOU_MAP__ = { ready: true, markerCount: markers.length };
+        window.__MYMAP__ = { ready: true, markerCount: markers.length };
       }, 400);
     }
 
     renderMap().catch((caught) => {
       const message = messageFromError(caught);
       onStatus(message);
-      window.__GUANGZHOU_MAP__ = { ready: false, markerCount: 0, error: message };
+      window.__MYMAP__ = { ready: false, markerCount: 0, error: message };
     });
 
     return () => {
       cancelled = true;
+      if (mapRef.current && overlaysRef.current.length > 0) {
+        mapRef.current.remove(overlaysRef.current);
+        overlaysRef.current = [];
+      }
     };
   }, [activeGroup, activeRouteId, clientConfig.amapJsApiKey, clientConfig.amapJsApiSecurityJsCode, mapState, onGroupSelect, onStatus, routes]);
 
-  return <div id="map" ref={mapElementRef} role="main" aria-label="广州游玩攻略地图" />;
+  return <div id="map" ref={mapElementRef} role="main" aria-label={`${mapState?.city ?? "城市"}攻略地图`} />;
 }
 
 function getAverageCenter(points: MapPoint[]): [number, number] {

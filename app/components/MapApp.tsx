@@ -76,6 +76,11 @@ export function MapApp({ initialState, clientConfig }: { initialState: MapStateR
     }
   }, [revertPreview, setAiResponse, setError, setIsWorking, setStatus]);
 
+  const handleMarkerGroupSelect = useCallback((groupName: string) => {
+    setActiveGroup(groupName);
+    setActiveRouteId(null);
+  }, []);
+
   return (
     <>
       <div className="map-filter-panel" aria-label="地图筛选">
@@ -102,7 +107,7 @@ export function MapApp({ initialState, clientConfig }: { initialState: MapStateR
         activeGroup={activeGroup}
         activeRouteId={activeRouteId}
         clientConfig={clientConfig}
-        onGroupSelect={setActiveGroup}
+        onGroupSelect={handleMarkerGroupSelect}
         onStatus={setStatus}
       />
       <AiPanel

@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./style.css";
 
 export const metadata: Metadata = {
-  title: "广州游玩攻略地图",
-  description: "AI workflow map editor for Guangzhou travel planning."
+  title: "MyMap",
+  description: "AI workflow map editor for city travel planning."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

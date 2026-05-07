@@ -9,7 +9,7 @@ const ROOT = process.cwd();
 const ENV_PATH = path.join(ROOT, ".env");
 const SEED_EXAMPLE_PATH = path.join(ROOT, "data", "seeds.example.json");
 const SEED_PATH = path.join(ROOT, "data", "seeds.json");
-const MAP_URL = "http://127.0.0.1:5173/app/index.html";
+const MAP_URL = "http://127.0.0.1:5173/";
 const REQUIRED_ENV = [
   "AMAP_WEB_SERVICE_KEY",
   "AMAP_JS_API_KEY",
@@ -21,7 +21,7 @@ const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
 const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
 
 async function main() {
-  console.log("广州游玩攻略地图 - 一键生成\n");
+  console.log("MyMap - 一键生成 AI 地图\n");
 
   await ensureSeedFile();
   const existingEnv = await readEnvFile();
@@ -277,7 +277,7 @@ async function hasProjectServerHealth() {
 
 function runDevServer() {
   return new Promise((resolve, reject) => {
-    const child = spawn("npm", ["run", "dev", "--", "--port", "5173"], {
+    const child = spawn("npm", ["run", "dev"], {
       cwd: ROOT,
       stdio: "inherit",
       env: process.env

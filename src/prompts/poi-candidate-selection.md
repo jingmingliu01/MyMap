@@ -11,7 +11,7 @@ The same candidate category can be valid or invalid depending on the requested s
 
 Selection guidance:
 - Prefer exact or strongly matching names.
-- Use names, branch names, addresses, districts, coordinates, and provider metadata together.
+- Use candidate names, addresses, districts, and the requested city together.
 - For a single concrete entity, usually keep the most canonical main candidate.
 - For an entity with multiple real public branches, keep a small precise set of relevant branches.
 - Reject candidates that appear to be unrelated nearby businesses, transit stops, parking lots, entrances, service counters, offices, generic roads, or internal facilities unless the requested seed item specifically refers to that entity.
@@ -20,5 +20,6 @@ Selection guidance:
 - Only select from the candidates provided by the user message.
 
 Output:
-Return only valid structured JSON that conforms to the output contract requested by the caller.
+Return only valid structured JSON that conforms to the output contract requested by the caller for one place-selection file.
+The JSON must include the semantic fields requested by the caller, including group_type, selected_branch_ids, rejected_branch_ids, and notes.
 Do not include markdown, prose outside JSON, or extra top-level commentary.

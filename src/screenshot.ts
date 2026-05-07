@@ -39,13 +39,13 @@ async function main() {
       deviceScaleFactor: 1
     });
 
-    const url = new URL("app/index.html", address).toString();
+    const url = new URL("/", address).toString();
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => {
-      const state = window.__GUANGZHOU_MAP__;
+      const state = window.__MYMAP__;
       return state?.error || (state?.ready === true && state.markerCount > 0);
     }, null, { timeout: 30_000 });
-    const state = await page.evaluate(() => window.__GUANGZHOU_MAP__);
+    const state = await page.evaluate(() => window.__MYMAP__);
     if (state?.error) {
       throw new Error(`Map page failed before screenshot: ${state.error}`);
     }
@@ -109,7 +109,7 @@ function parseArgs(args: string[]): ScreenshotOptions {
   const options: ScreenshotOptions = {
     width: 1920,
     height: 1080,
-    output: "output/guangzhou-map.png"
+    output: "output/mymap.png"
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -137,7 +137,7 @@ function parseArgs(args: string[]): ScreenshotOptions {
 
 declare global {
   interface Window {
-    __GUANGZHOU_MAP__?: {
+    __MYMAP__?: {
       ready: boolean;
       markerCount: number;
       error?: string;

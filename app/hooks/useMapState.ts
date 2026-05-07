@@ -8,7 +8,7 @@ export function useMapState(initialState: MapStateResponse) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    window.__GUANGZHOU_MAP__ = { ready: false, markerCount: 0 };
+    window.__MYMAP__ = { ready: false, markerCount: 0 };
   }, []);
 
   const mapState = state?.preview ?? state?.current ?? null;
@@ -37,7 +37,7 @@ export function useMapState(initialState: MapStateResponse) {
     mapState,
     routeState,
     visiblePoints,
-    hasPreview: Boolean(state?.preview),
+    hasPreview: Boolean(state?.preview || state?.preview_routes),
     status,
     setStatus,
     error,
