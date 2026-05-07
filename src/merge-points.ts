@@ -3,11 +3,11 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import OpenAI from "openai";
 import { z } from "zod";
-import type { MapPointsFile, PlaceBranch, PlaceGroup, PlaceType, SeedFile } from "./shared/schema.js";
-import { CURRENT_POINTS_PATH, GENERATED_POINTS_PATH, LEGACY_POINTS_PATH, ROUTES_PATH } from "./shared/paths.js";
-import { createLlmClient, getLlmConfig, llmChatOptions, type LlmConfig } from "./shared/llm.js";
-import { POI_CANDIDATE_SELECTION_PROMPT_PATH, readPrompt } from "./shared/prompts.js";
-import { slugify } from "./shared/slug.js";
+import type { MapPointsFile, PlaceBranch, PlaceGroup, PlaceType, SeedFile } from "./shared/schema";
+import { CURRENT_POINTS_PATH, GENERATED_POINTS_PATH, LEGACY_POINTS_PATH, ROUTES_PATH } from "./shared/paths";
+import { createLlmClient, getLlmConfig, llmChatOptions, type LlmConfig } from "./shared/llm";
+import { POI_CANDIDATE_SELECTION_PROMPT_PATH, readPrompt } from "./shared/prompts";
+import { slugify } from "./shared/slug";
 
 const DEFAULT_MAX_SELECTED_BRANCHES = 5;
 const GROUP_COLORS = ["#d84f3a", "#247b5f", "#4d64c8", "#8a5a32", "#8f4fc7", "#cc7a1f", "#3d7f89", "#b9486a"];

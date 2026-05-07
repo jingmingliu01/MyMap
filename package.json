@@ -8,23 +8,22 @@
     "start": "node scripts/run.mjs",
     "fetch:places": "tsx src/fetch-places.ts",
     "merge:points": "tsx src/merge-points.ts",
-    "dev": "tsx src/server.ts",
-    "build": "vite build",
-    "check": "tsc --noEmit && vite build",
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "check": "tsc --noEmit && next build",
     "screenshot": "tsx src/screenshot.ts"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^16.4.7",
     "playwright": "^1.52.0",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
-    "vite": "^8.0.10"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
+    "next": "^16.2.5",
     "openai": "^6.36.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",

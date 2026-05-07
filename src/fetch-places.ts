@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { PlaceBranch, PlaceGroup, SeedFile } from "./shared/schema.js";
-import { slugify } from "./shared/slug.js";
+import type { PlaceBranch, PlaceGroup, SeedFile } from "./shared/schema";
+import { slugify } from "./shared/slug";
 
 interface AmapPoi {
   id?: string;

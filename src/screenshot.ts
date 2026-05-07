@@ -11,11 +11,11 @@ interface ScreenshotOptions {
 }
 
 async function main() {
-  const key = process.env.AMAP_JS_API_KEY || process.env.VITE_AMAP_JS_API_KEY;
+  const key = process.env.AMAP_JS_API_KEY;
   if (!key) {
     throw new Error("Missing AMAP_JS_API_KEY. Copy .env.example to .env and set your AMap JS API key before running npm run screenshot.");
   }
-  const securityJsCode = process.env.AMAP_JS_API_SECURITY_JS_CODE || process.env.VITE_AMAP_JS_API_SECURITY_JS_CODE;
+  const securityJsCode = process.env.AMAP_JS_API_SECURITY_JS_CODE;
   if (!securityJsCode) {
     throw new Error(
       "Missing AMAP_JS_API_SECURITY_JS_CODE. Copy .env.example to .env and set your AMap JS API securityJsCode before running npm run screenshot."
@@ -25,9 +25,11 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
   await mkdir(path.dirname(options.output), { recursive: true });
 
-  const port = 4173;
-  const address = `http://127.0.0.1:${port}/`;
-  const server = startLocalServer(port);
+  const existingAddress = "http://127.0.0.1:5173/";
+  const temporaryAddress = "http://127.0.0.1:4173/";
+  const useExistingServer = await isServerHealthy(`${existingAddress}api/health`);
+  const address = useExistingServer ? existingAddress : temporaryAddress;
+  const server = useExistingServer ? null : startLocalServer(4173);
   await waitForServer(`${address}api/health`);
 
   const browser = await chromium.launch();
@@ -52,12 +54,14 @@ async function main() {
     console.log(`Wrote screenshot to ${options.output}`);
   } finally {
     await browser.close();
-    await stopLocalServer(server);
+    if (server) {
+      await stopLocalServer(server);
+    }
   }
 }
 
 function startLocalServer(port: number): ChildProcessWithoutNullStreams {
-  const child = spawn("npx", ["tsx", "src/server.ts", "--port", String(port)], {
+  const child = spawn("npx", ["next", "dev", "--hostname", "127.0.0.1", "--port", String(port)], {
     cwd: process.cwd(),
     env: { ...process.env, PORT: String(port) },
     stdio: "pipe"
@@ -71,17 +75,22 @@ function startLocalServer(port: number): ChildProcessWithoutNullStreams {
 async function waitForServer(url: string) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < 30_000) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        return;
-      }
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+    if (await isServerHealthy(url)) {
+      return;
     }
+    await new Promise((resolve) => setTimeout(resolve, 300));
   }
 
   throw new Error("Local map server did not start within 30 seconds.");
+}
+
+async function isServerHealthy(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url);
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function stopLocalServer(child: ChildProcessWithoutNullStreams) {

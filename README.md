@@ -2,10 +2,10 @@
 
 MyMap is an **AI Agent in workflow** project for turning a tiny travel seed file into a clean, interactive Guangzhou map.
 
-It combines AMap POI search, structured JSON generation, an AI-assisted editing workflow, a local React map UI, and Playwright screenshots. The core idea is simple: keep the map as inspectable JSON, then let an agent use narrow tools to preview route and point edits before the user applies them.
+It combines AMap POI search, structured JSON generation, an AI-assisted editing workflow, a Next.js + React map UI, and Playwright screenshots. The core idea is simple: keep the map as inspectable JSON, then let an agent use narrow tools to preview route and point edits before the user applies them.
 
 ```text
-seed.json -> AMap POI search -> places JSON -> OpenAI candidate filtering
+seed.json -> AMap POI search -> places JSON -> LLM candidate filtering
           -> map-state JSON -> AMap JS rendering -> AI tool previews -> PNG screenshot
 ```
 
@@ -17,6 +17,7 @@ seed.json -> AMap POI search -> places JSON -> OpenAI candidate filtering
 - OpenAI-compatible Chat Completions support, including OpenAI API fallback.
 - Chat Completions tool-calling agent for map editing workflows.
 - Preview-first edits: AI changes are shown first, then applied only after user confirmation.
+- Next.js App Router with Route Handlers for local API endpoints.
 - Separate JSON state for generated points, current editable points, route previews, and applied routes.
 - AMap JS API rendering with custom colored markers and route overlays.
 - Playwright screenshot export for downstream Excalidraw layout work.
@@ -83,6 +84,8 @@ This calls AMap Web Service POI search and writes one candidate file per seed it
 ```text
 data/places/*.json
 ```
+
+These files are local generated caches and are ignored by Git.
 
 ### 3. Merge Map Points
 
@@ -187,7 +190,7 @@ openai_model=gpt-5.5
 ```bash
 npm run fetch:places   # Query AMap POI candidates
 npm run merge:points   # Filter and merge candidates into map JSON
-npm run dev            # Start local React + Node API server
+npm run dev            # Start local Next.js app and API routes
 npm run screenshot     # Export output/guangzhou-map.png
 npm run check          # Type-check and build
 ```

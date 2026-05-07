@@ -20,7 +20,7 @@
     {
       "id": "place-6d77-5fc3-6c99-5e7f-573a-1",
       "group_name": "海心沙广场",
-      "group_type": "place",
+      "group_type": "attraction",
       "group_color": "#247b5f",
       "branch_id": 1,
       "branch_name": "海心沙广场",
@@ -62,7 +62,7 @@
     {
       "id": "place-6069-5b81-96ea-7cd5-884c-1",
       "group_name": "恩宁雪糕行",
-      "group_type": "place",
+      "group_type": "cafe",
       "group_color": "#8a5a32",
       "branch_id": 1,
       "branch_name": "恩宁雪糕行",
