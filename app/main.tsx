@@ -97,7 +97,6 @@ function App() {
         { role: "assistant", content: assistantMessage }
       ];
       setChatMessages((currentMessages) => [...currentMessages, ...nextMessages].slice(-10));
-      setChatMessage("");
       setActiveGroup(null);
       setActiveRouteId(null);
       setStatus("");

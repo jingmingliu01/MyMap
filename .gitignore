@@ -4,6 +4,8 @@ dist/
 .DS_Store
 docs/
 data/*.preview.json
+data/places/*.json
 output/*.png
 output/*.jpg
 output/*.jpeg
+output/*.json

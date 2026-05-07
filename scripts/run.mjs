@@ -14,9 +14,11 @@ const REQUIRED_ENV = [
   "AMAP_WEB_SERVICE_KEY",
   "AMAP_JS_API_KEY",
   "AMAP_JS_API_SECURITY_JS_CODE",
-  "OPENAI_API_KEY"
+  "DEEPSEEK_API_KEY"
 ];
-const DEFAULT_MODEL = "gpt-5.5";
+const DEFAULT_PROVIDER = "deepseek";
+const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
+const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
 
 async function main() {
   console.log("广州游玩攻略地图 - 一键生成\n");
@@ -31,7 +33,7 @@ async function main() {
 
   await runCommand("npm", ["install"], "安装依赖");
   await runCommand("npm", ["run", "fetch:places"], "查询高德 POI");
-  await runCommand("npm", ["run", "merge:points"], "使用 OpenAI 精筛并生成地图点位");
+  await runCommand("npm", ["run", "merge:points"], "使用 LLM 精筛并生成地图点位");
 
   const portInUse = await isPortInUse(5173);
   console.log("\n地图已经根据当前 data/seeds.json 生成。");
@@ -70,7 +72,10 @@ async function promptForEnv(existingEnv) {
     answers[key] = await promptRequiredSecret(key, existingEnv[key]);
   }
 
-  answers.openai_model = await promptText("openai_model", existingEnv.openai_model || DEFAULT_MODEL, false);
+  answers.LLM_PROVIDER = await promptText("LLM_PROVIDER", existingEnv.LLM_PROVIDER || DEFAULT_PROVIDER, false);
+  answers.DEEPSEEK_BASE_URL = await promptText("DEEPSEEK_BASE_URL", existingEnv.DEEPSEEK_BASE_URL || DEFAULT_DEEPSEEK_BASE_URL, false);
+  answers.deepseek_model = await promptText("deepseek_model", existingEnv.deepseek_model || DEFAULT_DEEPSEEK_MODEL, false);
+  answers.DEEPSEEK_REASONING_EFFORT = await promptText("DEEPSEEK_REASONING_EFFORT", existingEnv.DEEPSEEK_REASONING_EFFORT || "high", false);
   return answers;
 }
 
@@ -167,8 +172,14 @@ async function writeEnvFile(env) {
     `AMAP_WEB_SERVICE_KEY=${quoteEnv(env.AMAP_WEB_SERVICE_KEY)}`,
     `AMAP_JS_API_KEY=${quoteEnv(env.AMAP_JS_API_KEY)}`,
     `AMAP_JS_API_SECURITY_JS_CODE=${quoteEnv(env.AMAP_JS_API_SECURITY_JS_CODE)}`,
-    `OPENAI_API_KEY=${quoteEnv(env.OPENAI_API_KEY)}`,
-    `openai_model=${quoteEnv(env.openai_model || DEFAULT_MODEL)}`
+    `LLM_PROVIDER=${quoteEnv(env.LLM_PROVIDER || DEFAULT_PROVIDER)}`,
+    `DEEPSEEK_API_KEY=${quoteEnv(env.DEEPSEEK_API_KEY)}`,
+    `DEEPSEEK_BASE_URL=${quoteEnv(env.DEEPSEEK_BASE_URL || DEFAULT_DEEPSEEK_BASE_URL)}`,
+    `deepseek_model=${quoteEnv(env.deepseek_model || DEFAULT_DEEPSEEK_MODEL)}`,
+    `DEEPSEEK_REASONING_EFFORT=${quoteEnv(env.DEEPSEEK_REASONING_EFFORT || "high")}`,
+    `OPENAI_API_KEY=${quoteEnv(env.OPENAI_API_KEY || "")}`,
+    `OPENAI_BASE_URL=${quoteEnv(env.OPENAI_BASE_URL || "")}`,
+    `openai_model=${quoteEnv(env.openai_model || "gpt-5.5")}`
   ];
 
   await writeFile(ENV_PATH, `${lines.join("\n")}\n`, "utf8");

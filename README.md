@@ -13,7 +13,8 @@ seed.json -> AMap POI search -> places JSON -> OpenAI candidate filtering
 
 - Minimal JSON seed input for places such as restaurants, attractions, malls, cafes, and landmarks.
 - AMap Web Service POI search for Guangzhou candidates.
-- OpenAI-powered candidate filtering during merge.
+- DeepSeek V4 Flash candidate filtering during merge by default.
+- OpenAI-compatible Chat Completions support, including OpenAI API fallback.
 - Chat Completions tool-calling agent for map editing workflows.
 - Preview-first edits: AI changes are shown first, then applied only after user confirmation.
 - Separate JSON state for generated points, current editable points, route previews, and applied routes.
@@ -32,15 +33,26 @@ MyMap currently supports AMap for POI search and map rendering.
 - AMap JavaScript API v2 docs: [AMap JS API v2](https://lbs.amap.com/api/javascript-api-v2/summary)
 - AMap key console: [AMap Console](https://console.amap.com/dev/key/app)
 
+### DeepSeek
+
+MyMap now defaults to DeepSeek V4 Flash for LLM workflows.
+
+- Chat Completions base URL: `https://api.deepseek.com`
+- Default model: `deepseek-v4-flash`
+- Thinking mode: enabled by default with `reasoning_effort: "high"` and `thinking.type: "enabled"`
+- DeepSeek thinking mode guide: [DeepSeek Thinking Mode](https://api-docs.deepseek.com/zh-cn/guides/thinking_mode)
+- DeepSeek model page: [DeepSeek Models and Pricing](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
+- DeepSeek platform: [DeepSeek Platform](https://platform.deepseek.com)
+
 ### OpenAI
 
-MyMap currently supports OpenAI API for LLM workflows.
+MyMap also supports OpenAI API as an optional fallback by setting `LLM_PROVIDER=openai`.
 
 - Chat Completions endpoint: `https://api.openai.com/v1/chat/completions`
 - OpenAI API reference: [Chat Completions](https://platform.openai.com/docs/api-reference/chat/create)
 - OpenAI API key page: [API Keys](https://platform.openai.com/api-keys)
 
-The local agent uses Chat Completions `messages` plus `tools`, which keeps the design close to OpenAI-compatible providers. `OPENAI_BASE_URL` is available for future provider experiments.
+The local agent uses Chat Completions `messages` plus `tools`, which keeps the design close to OpenAI-compatible providers.
 
 ## How It Works
 
@@ -78,7 +90,7 @@ data/places/*.json
 npm run merge:points
 ```
 
-This uses OpenAI to filter noisy POI candidates and writes:
+This uses the configured LLM provider to filter noisy POI candidates and writes:
 
 ```text
 data/map-points.generated.json
@@ -138,7 +150,7 @@ The interactive script will:
 3. Install dependencies.
 4. Create `data/seeds.json` from `data/seeds.example.json` if needed.
 5. Fetch AMap POI candidates.
-6. Merge and filter map points with OpenAI.
+6. Merge and filter map points with the configured LLM provider.
 7. Start the local map server.
 
 ## Environment Variables
@@ -155,14 +167,19 @@ Required:
 AMAP_WEB_SERVICE_KEY=your_amap_web_service_key
 AMAP_JS_API_KEY=your_amap_js_api_key
 AMAP_JS_API_SECURITY_JS_CODE=your_amap_js_api_security_js_code
-OPENAI_API_KEY=your_openai_api_key
-openai_model=gpt-5.5
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+deepseek_model=deepseek-v4-flash
+DEEPSEEK_REASONING_EFFORT=high
 ```
 
 Optional:
 
 ```bash
+OPENAI_API_KEY=your_openai_api_key
 OPENAI_BASE_URL=
+openai_model=gpt-5.5
 ```
 
 ## Scripts

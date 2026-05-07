@@ -2,13 +2,13 @@ import "dotenv/config";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import OpenAI from "openai";
-import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import type { MapPointsFile, PlaceBranch, PlaceGroup, PlaceType, SeedFile } from "./shared/schema.js";
 import { CURRENT_POINTS_PATH, GENERATED_POINTS_PATH, LEGACY_POINTS_PATH, ROUTES_PATH } from "./shared/paths.js";
+import { createLlmClient, getLlmConfig, llmChatOptions, type LlmConfig } from "./shared/llm.js";
+import { POI_CANDIDATE_SELECTION_PROMPT_PATH, readPrompt } from "./shared/prompts.js";
 import { slugify } from "./shared/slug.js";
 
-const DEFAULT_OPENAI_MODEL = "gpt-5.5";
 const DEFAULT_MAX_SELECTED_BRANCHES = 5;
 const GROUP_COLORS = ["#d84f3a", "#247b5f", "#4d64c8", "#8a5a32", "#8f4fc7", "#cc7a1f", "#3d7f89", "#b9486a"];
 
@@ -27,20 +27,21 @@ async function main() {
   const seedPath = process.env.SEED_PATH ?? "data/seeds.json";
   const seed = await readSeed(seedPath);
   const groups = await readPlaceGroupsForSeed(seed, placesDir);
-  const openai = createOpenAIClient();
-  const openai_model = process.env.openai_model || DEFAULT_OPENAI_MODEL;
+  const llmConfig = getLlmConfig();
+  const openai = createLlmClient(llmConfig);
+  const selectionPrompt = await readPrompt(POI_CANDIDATE_SELECTION_PROMPT_PATH);
 
-  console.log(`Filtering candidate branches with OpenAI model: ${openai_model}`);
+  console.log(`Filtering candidate branches with ${llmConfig.provider} model: ${llmConfig.model}`);
   console.log(`Using ${seedPath}: ${seed.items.join(", ")}`);
 
   const filteredGroups: Array<{ group: PlaceGroup; groupType: PlaceType; branches: PlaceBranch[] }> = [];
   for (const group of groups) {
     if (group.branches.length === 0) {
-      console.warn(`${group.name}: skipped 0/0. No AMap candidates were available.`);
+      console.warn(`${group.name}: skipped 0/0. No POI candidates were available.`);
       continue;
     }
 
-    const selection = await selectRelevantBranches(openai, openai_model, group);
+    const selection = await selectRelevantBranches(openai, llmConfig, selectionPrompt, group);
     const selectedIds = new Set(selection.selected_branch_ids);
     const filteredBranches = group.branches.filter((branch) => selectedIds.has(branch.id));
 
@@ -82,7 +83,7 @@ async function main() {
   };
 
   if (merged.points.length === 0) {
-    throw new Error("OpenAI selected 0 points for all current seed items. Refusing to write an empty map.");
+    throw new Error("LLM selected 0 points for all current seed items. Refusing to write an empty map.");
   }
 
   await mkdir(path.dirname(outputPath), { recursive: true });
@@ -94,33 +95,29 @@ async function main() {
   console.log(`Reset editable state at ${CURRENT_POINTS_PATH}`);
 }
 
-function createOpenAIClient(): OpenAI {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("Missing OPENAI_API_KEY. Set it in .env before running npm run merge:points.");
-  }
-
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  });
-}
-
-async function selectRelevantBranches(openai: OpenAI, openai_model: string, group: PlaceGroup): Promise<BranchSelectionResult> {
+async function selectRelevantBranches(
+  openai: OpenAI,
+  llmConfig: LlmConfig,
+  selectionPrompt: string,
+  group: PlaceGroup
+): Promise<BranchSelectionResult> {
   const candidates = group.branches.map((branch) => ({
     id: branch.id,
     branch_name: branch.branch_name,
     address: branch.address,
     district: branch.district,
     longitude: branch.longitude,
-    latitude: branch.latitude
+    latitude: branch.latitude,
+    coordinate_system: branch.coordinate_system,
+    map_provider: branch.map_provider
   }));
 
-  const response = await openai.responses.parse({
-    model: openai_model,
-    input: [
+  const response = await openai.chat.completions.create({
+    model: llmConfig.model,
+    messages: [
       {
-        role: "developer",
-        content:
-          `You filter AMap POI search candidates for a travel map. First infer the requested place type as one of restaurant, cafe, attraction, mall, or place. Then return only a small, precise set of candidate branch ids that truly represent the requested place or brand in Guangzhou. Exclude subway stations, bus stops, parking lots, entrances/exits, hotels, generic roads, unrelated stores, tourist centers, ticket offices, plazas, and nearby facilities. For a restaurant/cafe/mall brand, keep at most ${DEFAULT_MAX_SELECTED_BRANCHES} real public branches of that brand, prioritizing iconic, central, travel-friendly, or clearly named branches. For a landmark/attraction, keep only the single most canonical main POI.`
+        role: "system",
+        content: selectionPrompt
       },
       {
         role: "user",
@@ -128,23 +125,32 @@ async function selectRelevantBranches(openai: OpenAI, openai_model: string, grou
           {
             requested_place_name: group.name,
             city: "广州",
-            candidates
+            candidates,
+            output_contract: {
+              group_type: "one of: restaurant, cafe, attraction, mall, place",
+              selected_branch_ids: `array of candidate ids to keep, max ${DEFAULT_MAX_SELECTED_BRANCHES} unless a single canonical candidate is clearly best`,
+              rejected_branch_ids: "array of candidate ids to exclude",
+              notes: "short explanation"
+            }
           },
           null,
           2
         )
       }
     ],
-    text: {
-      format: zodTextFormat(BranchSelection, "branch_selection")
-    }
-  });
+    response_format: {
+      type: "json_object"
+    },
+    ...llmChatOptions(llmConfig)
+  } as never);
 
-  if (!response.output_parsed) {
-    throw new Error(`OpenAI did not return structured branch selection for ${group.name}.`);
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error(`LLM did not return branch selection content for ${group.name}.`);
   }
 
-  return sanitizeSelection(response.output_parsed, group.branches, response.output_parsed.group_type === "attraction" ? 1 : DEFAULT_MAX_SELECTED_BRANCHES);
+  const parsed = BranchSelection.parse(parseJsonObject(content));
+  return sanitizeSelection(parsed, group.branches, parsed.group_type === "attraction" ? 1 : DEFAULT_MAX_SELECTED_BRANCHES);
 }
 
 function sanitizeSelection(selection: BranchSelectionResult, branches: PlaceBranch[], maxSelected: number): BranchSelectionResult {
@@ -162,6 +168,18 @@ function sanitizeSelection(selection: BranchSelectionResult, branches: PlaceBran
 
 function unique(values: number[]): number[] {
   return Array.from(new Set(values));
+}
+
+function parseJsonObject(content: string): unknown {
+  try {
+    return JSON.parse(content);
+  } catch {
+    const match = content.match(/\{[\s\S]*\}/);
+    if (!match) {
+      throw new Error("LLM returned content that was not JSON.");
+    }
+    return JSON.parse(match[0]);
+  }
 }
 
 async function writeJson(filePath: string, value: unknown) {

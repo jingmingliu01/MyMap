@@ -3,7 +3,6 @@ import { createServer as createHttpServer, type IncomingMessage, type ServerResp
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import OpenAI from "openai";
 import type {
   ChatCompletionMessageFunctionToolCall,
   ChatCompletionMessageParam,
@@ -21,9 +20,10 @@ import {
   PREVIEW_ROUTES_PATH,
   ROUTES_PATH
 } from "./shared/paths.js";
+import { createLlmClient, getLlmConfig, llmChatOptions } from "./shared/llm.js";
+import { MAP_EDITING_AGENT_PROMPT_PATH, readPrompt } from "./shared/prompts.js";
 import { slugify } from "./shared/slug.js";
 
-const DEFAULT_OPENAI_MODEL = "gpt-5.5";
 const DEFAULT_ROUTE_COLOR = "#1f6f8b";
 
 const RouteSchema = z.object({
@@ -216,7 +216,7 @@ const agentTools: ChatCompletionTool[] = [
     function: {
       name: "edit_map_points_json",
       description:
-        "Write a map-state preview by changing point visibility only. Use only when the user explicitly asks to filter, hide, restore, or keep a subset of map points.",
+        "Write a map-state preview by changing point visibility only. Use only when the user explicitly asks to filter, hide, restore, or keep a subset of map points. For requests like 'only keep the Y near X', treat Y as the target group and keep all unrelated groups unchanged.",
       parameters: {
         type: "object",
         properties: {
@@ -248,30 +248,14 @@ const toolHandlers: Record<string, ToolHandler> = {
 };
 
 async function createAiPreview(message: string, messages: ChatMessage[]) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("Missing OPENAI_API_KEY. Set it in .env before using the AI editing panel.");
-  }
-
-  const openai_model = process.env.openai_model || DEFAULT_OPENAI_MODEL;
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: process.env.OPENAI_BASE_URL || undefined
-  });
+  const llmConfig = getLlmConfig();
+  const openai = createLlmClient(llmConfig);
+  const agentPrompt = await readPrompt(MAP_EDITING_AGENT_PROMPT_PATH);
 
   const agentMessages: ChatCompletionMessageParam[] = [
     {
       role: "system",
-      content: [
-        "You are a local map-editing agent for a Guangzhou travel map.",
-        "Use tools to inspect and preview edits. Do not directly write final state.",
-        "Tool boundary rules:",
-        "- If the user only asks to create, edit, show, or explain routes, call read_routes_json then edit_routes_json. Do not call map point tools.",
-        "- Only call read_map_points_json or edit_map_points_json when the user explicitly asks to filter, hide, restore, keep only, or otherwise change displayed map points.",
-        "- Never read or edit data/places/*.json.",
-        "- Use routeable point ids returned by read_routes_json when creating routes.",
-        "- If the user mentions a place by name, use the matching routeable point from tool output, not basemap labels or external knowledge.",
-        "After tool calls, answer in Chinese with a concise preview summary."
-      ].join("\n")
+      content: agentPrompt
     },
     ...sanitizeChatMessages(messages),
     {
@@ -283,11 +267,12 @@ async function createAiPreview(message: string, messages: ChatMessage[]) {
   let finalMessage = "";
   for (let step = 0; step < 8; step += 1) {
     const response = await openai.chat.completions.create({
-      model: openai_model,
+      model: llmConfig.model,
       messages: agentMessages,
       tools: agentTools,
-      tool_choice: "auto"
-    });
+      tool_choice: "auto",
+      ...llmChatOptions(llmConfig)
+    } as never);
 
     const assistantMessage = response.choices[0]?.message;
     if (!assistantMessage) {
@@ -447,8 +432,13 @@ async function applyPreview() {
     throw new Error("No preview exists. Ask the AI for an edit before applying.");
   }
 
-  await writeJson(CURRENT_POINTS_PATH, await readJson(PREVIEW_POINTS_PATH));
-  await writeJson(ROUTES_PATH, existsSync(PREVIEW_ROUTES_PATH) ? await readJson(PREVIEW_ROUTES_PATH) : { routes: [] });
+  const previewPoints = await readJson<MapPointsFile>(PREVIEW_POINTS_PATH);
+  const previewRoutes = existsSync(PREVIEW_ROUTES_PATH) ? await readJson<MapRoutesFile>(PREVIEW_ROUTES_PATH) : { routes: [] };
+  const normalized = normalizeAppliedMapState(previewPoints, previewRoutes);
+
+  await writeJson(CURRENT_POINTS_PATH, normalized.mapState);
+  await writeJson(LEGACY_POINTS_PATH, normalized.mapState);
+  await writeJson(ROUTES_PATH, normalized.routes);
   await clearPreview();
 }
 
@@ -545,6 +535,46 @@ function uniqueRouteId(baseId: string, seenRouteIds: Set<string>): string {
   }
   seenRouteIds.add(id);
   return id;
+}
+
+function normalizeAppliedMapState(mapState: MapPointsFile, routes: MapRoutesFile): { mapState: MapPointsFile; routes: MapRoutesFile } {
+  const idMap = new Map<string, string>();
+  const nextBranchIdByGroup = new Map<string, number>();
+  const normalizedPoints = mapState.points.map((point) => {
+    if (point.visible === false) {
+      return point;
+    }
+
+    const nextBranchId = nextBranchIdByGroup.get(point.group_name) ?? 1;
+    nextBranchIdByGroup.set(point.group_name, nextBranchId + 1);
+    const nextId = `${slugify(point.group_name)}-${nextBranchId}`;
+    idMap.set(point.id, nextId);
+
+    return {
+      ...point,
+      id: nextId,
+      branch_id: nextBranchId,
+      label: String(nextBranchId),
+      visible: true
+    };
+  });
+
+  const normalizedRoutes = {
+    routes: routes.routes
+      .map((route) => ({
+        ...route,
+        point_ids: route.point_ids.map((pointId) => idMap.get(pointId) ?? pointId)
+      }))
+      .filter((route) => route.point_ids.length >= 2)
+  };
+
+  return {
+    mapState: {
+      ...mapState,
+      points: normalizedPoints
+    },
+    routes: normalizedRoutes
+  };
 }
 
 function sendJson(response: ServerResponse, value: unknown, statusCode = 200) {
