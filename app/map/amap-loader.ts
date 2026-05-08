@@ -2,7 +2,7 @@ import type { AMapNamespace } from "../types/amap";
 
 let amapLoadPromise: Promise<AMapNamespace> | null = null;
 
-export async function loadAmap(key: string, securityJsCode: string): Promise<AMapNamespace> {
+export async function loadAmap(key: string, securityJsCode: string, version: string): Promise<AMapNamespace> {
   if (window.AMap) {
     return window.AMap;
   }
@@ -16,7 +16,7 @@ export async function loadAmap(key: string, securityJsCode: string): Promise<AMa
 
   amapLoadPromise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(key)}`;
+    script.src = `https://webapi.amap.com/maps?v=${encodeURIComponent(version)}&key=${encodeURIComponent(key)}`;
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => {

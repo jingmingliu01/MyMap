@@ -12,6 +12,7 @@ interface UseAiChatOptions {
   setStatus: (message: string) => void;
   setError: (message: string | null) => void;
   onPreviewReady: () => void;
+  clientMessageHistory: number;
 }
 
 export function useAiChat({
@@ -22,7 +23,8 @@ export function useAiChat({
   setMapState,
   setStatus,
   setError,
-  onPreviewReady
+  onPreviewReady,
+  clientMessageHistory
 }: UseAiChatOptions) {
   const [aiResponse, setAiResponse] = useState("");
   const [isWorking, setIsWorking] = useState(false);
@@ -50,7 +52,7 @@ export function useAiChat({
         { role: "assistant", content: assistantMessage }
       ];
       setChatMessages((currentMessages) =>
-        [...currentMessages, ...nextMessages].slice(-10)
+        [...currentMessages, ...nextMessages].slice(-clientMessageHistory)
       );
       onPreviewReady();
       setStatus("");

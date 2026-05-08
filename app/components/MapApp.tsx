@@ -42,7 +42,8 @@ export function MapApp({ initialState, clientConfig }: { initialState: MapStateR
     onPreviewReady: () => {
       setActiveGroup(null);
       setActiveRouteId(null);
-    }
+    },
+    clientMessageHistory: clientConfig.aiClientMessageHistory
   });
 
   const handleApplyPreview = useCallback(async () => {

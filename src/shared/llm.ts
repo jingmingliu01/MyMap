@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { DEFAULT_DEEPSEEK_BASE_URL, DEFAULT_DEEPSEEK_MODEL, DEFAULT_OPENAI_MODEL } from "./env";
 
 export type LlmProvider = "deepseek" | "openai";
 
@@ -9,10 +10,6 @@ export interface LlmConfig {
   model: string;
   reasoningEffort: "high" | "max";
 }
-
-export const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
-export const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
-export const DEFAULT_OPENAI_MODEL = "gpt-5.5";
 
 export function getLlmConfig(): LlmConfig {
   const provider = resolveProvider();
@@ -27,7 +24,7 @@ export function getLlmConfig(): LlmConfig {
       provider,
       apiKey,
       baseURL: process.env.DEEPSEEK_BASE_URL || DEFAULT_DEEPSEEK_BASE_URL,
-      model: process.env.deepseek_model || process.env.LLM_MODEL || DEFAULT_DEEPSEEK_MODEL,
+      model: process.env.DEEPSEEK_MODEL || process.env.deepseek_model || process.env.LLM_MODEL || DEFAULT_DEEPSEEK_MODEL,
       reasoningEffort: process.env.DEEPSEEK_REASONING_EFFORT === "max" ? "max" : "high"
     };
   }
@@ -41,7 +38,7 @@ export function getLlmConfig(): LlmConfig {
     provider,
     apiKey,
     baseURL: process.env.OPENAI_BASE_URL || undefined,
-    model: process.env.openai_model || process.env.LLM_MODEL || DEFAULT_OPENAI_MODEL,
+    model: process.env.OPENAI_MODEL || process.env.openai_model || process.env.LLM_MODEL || DEFAULT_OPENAI_MODEL,
     reasoningEffort: "high"
   };
 }

@@ -4,13 +4,13 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import OpenAI from "openai";
 import { z } from "zod";
+import { getSelectionConfig, type SelectionConfig } from "./shared/env";
 import type { MapPointsFile, PlaceBranch, PlaceGroup, PlaceSelectionFile, PlaceType, SeedFile } from "./shared/schema";
 import { CURRENT_POINTS_PATH, GENERATED_POINTS_PATH, LEGACY_POINTS_PATH, ROUTES_PATH, SELECTIONS_DIR } from "./shared/paths";
 import { createLlmClient, getLlmConfig, llmChatOptions, type LlmConfig } from "./shared/llm";
 import { POI_CANDIDATE_SELECTION_PROMPT_PATH, readPrompt } from "./shared/prompts";
 import { slugify } from "./shared/slug";
 
-const DEFAULT_MAX_SELECTED_BRANCHES = 5;
 const PLACE_TYPES = ["restaurant", "cafe", "attraction", "mall", "place"] as const;
 const GROUP_COLORS = ["#d84f3a", "#247b5f", "#4d64c8", "#8a5a32", "#8f4fc7", "#cc7a1f", "#3d7f89", "#b9486a"];
 const LLM_SELECTION_OUTPUT_CONTRACT = {
@@ -53,11 +53,15 @@ async function main() {
   const seed = await readSeed(seedPath);
   const placeSources = await readPlaceGroupsForSeed(seed, placesDir);
   const llmConfig = getLlmConfig();
+  const selectionConfig = getSelectionConfig();
   const openai = createLlmClient(llmConfig);
   const selectionPrompt = await readPrompt(POI_CANDIDATE_SELECTION_PROMPT_PATH);
-  const promptHash = hashText(`${selectionPrompt}\n${JSON.stringify(LLM_SELECTION_OUTPUT_CONTRACT)}`);
+  const promptHash = hashText(`${selectionPrompt}\n${JSON.stringify(LLM_SELECTION_OUTPUT_CONTRACT)}\n${JSON.stringify(selectionConfig)}`);
 
   console.log(`Filtering candidate branches with ${llmConfig.provider} model: ${llmConfig.model}`);
+  console.log(
+    `Selection policy: max ${selectionConfig.maxSelectedBranches} branch(es), max ${selectionConfig.maxSelectedAttractionBranches} attraction branch(es).`
+  );
   console.log(`Using ${seedPath}: ${seed.items.join(", ")}`);
 
   const filteredGroups: Array<{ group: PlaceGroup; groupType: PlaceType; branches: PlaceBranch[] }> = [];
@@ -68,7 +72,7 @@ async function main() {
       continue;
     }
 
-    const selection = await getSelection(openai, llmConfig, selectionPrompt, promptHash, placeSource);
+    const selection = await getSelection(openai, llmConfig, selectionPrompt, promptHash, selectionConfig, placeSource);
     const selectedIds = new Set(selection.selected_branch_ids);
     const filteredBranches = group.branches.filter((branch) => selectedIds.has(branch.id));
 
@@ -127,16 +131,17 @@ async function getSelection(
   llmConfig: LlmConfig,
   selectionPrompt: string,
   promptHash: string,
+  selectionConfig: SelectionConfig,
   placeSource: PlaceGroupSource
 ): Promise<PlaceSelectionFile> {
   const selectionPath = path.join(SELECTIONS_DIR, `${path.basename(placeSource.filePath, ".json")}.selection.json`);
-  const cached = await readCachedSelection(selectionPath, llmConfig, promptHash, placeSource);
+  const cached = await readCachedSelection(selectionPath, llmConfig, promptHash, selectionConfig, placeSource);
   if (cached) {
     console.log(`${placeSource.group.name}: reused cached selection ${selectionPath}`);
     return cached;
   }
 
-  const semanticSelection = await selectRelevantBranches(openai, llmConfig, selectionPrompt, placeSource.group);
+  const semanticSelection = await selectRelevantBranches(openai, llmConfig, selectionPrompt, selectionConfig, placeSource.group);
   const selection: PlaceSelectionFile = {
     source_place_file: placeSource.sourcePlaceFile,
     source_hash: placeSource.sourceHash,
@@ -160,6 +165,7 @@ async function readCachedSelection(
   selectionPath: string,
   llmConfig: LlmConfig,
   promptHash: string,
+  selectionConfig: SelectionConfig,
   placeSource: PlaceGroupSource
 ): Promise<PlaceSelectionFile | null> {
   let content: string;
@@ -198,7 +204,7 @@ async function readCachedSelection(
     return null;
   }
 
-  const sanitized = sanitizeSelection(cached, placeSource.group.branches, cached.group_type === "attraction" ? 1 : DEFAULT_MAX_SELECTED_BRANCHES);
+  const sanitized = sanitizeSelection(cached, placeSource.group.branches, maxSelectedForGroup(cached.group_type, selectionConfig));
   return {
     source_place_file: cached.source_place_file,
     source_hash: cached.source_hash,
@@ -218,6 +224,7 @@ async function selectRelevantBranches(
   openai: OpenAI,
   llmConfig: LlmConfig,
   selectionPrompt: string,
+  selectionConfig: SelectionConfig,
   group: PlaceGroup
 ): Promise<BranchSelectionResult> {
   const candidates = group.branches.map((branch) => ({
@@ -260,7 +267,11 @@ async function selectRelevantBranches(
   }
 
   const parsed = BranchSelection.parse(parseJsonObject(content));
-  return sanitizeSelection(parsed, group.branches, parsed.group_type === "attraction" ? 1 : DEFAULT_MAX_SELECTED_BRANCHES);
+  return sanitizeSelection(parsed, group.branches, maxSelectedForGroup(parsed.group_type, selectionConfig));
+}
+
+function maxSelectedForGroup(groupType: PlaceType, config: SelectionConfig): number {
+  return groupType === "attraction" ? config.maxSelectedAttractionBranches : config.maxSelectedBranches;
 }
 
 function sanitizeSelection(selection: BranchSelectionResult, branches: PlaceBranch[], maxSelected: number): BranchSelectionResult {

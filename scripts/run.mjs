@@ -4,21 +4,26 @@ import { createServer } from "node:net";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import readline from "node:readline";
+import {
+  DEFAULT_DEEPSEEK_BASE_URL,
+  DEFAULT_DEEPSEEK_MODEL,
+  DEFAULT_OPENAI_MODEL,
+  DEFAULT_PROVIDER,
+  appUrl,
+  getDefaultEnv,
+  getRuntimeConfig
+} from "./runtime-config.mjs";
 
 const ROOT = process.cwd();
 const ENV_PATH = path.join(ROOT, ".env");
 const SEED_EXAMPLE_PATH = path.join(ROOT, "data", "seeds.example.json");
 const SEED_PATH = path.join(ROOT, "data", "seeds.json");
-const MAP_URL = "http://127.0.0.1:5173/";
 const REQUIRED_ENV = [
   "AMAP_WEB_SERVICE_KEY",
   "AMAP_JS_API_KEY",
   "AMAP_JS_API_SECURITY_JS_CODE",
   "DEEPSEEK_API_KEY"
 ];
-const DEFAULT_PROVIDER = "deepseek";
-const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
-const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
 
 async function main() {
   console.log("MyMap - 一键生成 AI 地图\n");
@@ -26,7 +31,9 @@ async function main() {
   await ensureSeedFile();
   const existingEnv = await readEnvFile();
   const answers = await promptForEnv(existingEnv);
-  await writeEnvFile({ ...existingEnv, ...answers });
+  const env = { ...existingEnv, ...answers };
+  await writeEnvFile(env);
+  const runtimeConfig = getRuntimeConfig(env);
 
   const seedState = await describeSeedState();
   console.log(seedState);
@@ -35,18 +42,18 @@ async function main() {
   await runCommand("npm", ["run", "fetch:places"], "查询高德 POI");
   await runCommand("npm", ["run", "merge:points"], "使用 LLM 精筛并生成地图点位");
 
-  const portInUse = await isPortInUse(5173);
+  const portInUse = await isPortInUse(runtimeConfig.host, runtimeConfig.port);
   console.log("\n地图已经根据当前 data/seeds.json 生成。");
-  console.log(`打开查看：${MAP_URL}`);
+  console.log(`打开查看：${appUrl(runtimeConfig)}`);
   console.log("你可以通过修改 data/seeds.json 来标注自己想要的地点，之后重新运行 npm start 即可重新生成。\n");
 
   if (portInUse) {
     if (await hasProjectServerHealth()) {
-      console.log("检测到 5173 端口已有本项目 dev server，本次复用现有服务。请刷新浏览器页面查看最新地图。");
+      console.log(`检测到 ${runtimeConfig.port} 端口已有本项目 dev server，本次复用现有服务。请刷新浏览器页面查看最新地图。`);
       return;
     }
 
-    console.log("检测到 5173 端口已被占用，但它不是当前版本的本项目 dev server。请停止占用该端口的进程后重新运行 npm start。");
+    console.log(`检测到 ${runtimeConfig.port} 端口已被占用，但它不是当前版本的本项目 dev server。请停止占用该端口的进程后重新运行 npm start。`);
     return;
   }
 
@@ -74,8 +81,10 @@ async function promptForEnv(existingEnv) {
 
   answers.LLM_PROVIDER = await promptText("LLM_PROVIDER", existingEnv.LLM_PROVIDER || DEFAULT_PROVIDER, false);
   answers.DEEPSEEK_BASE_URL = await promptText("DEEPSEEK_BASE_URL", existingEnv.DEEPSEEK_BASE_URL || DEFAULT_DEEPSEEK_BASE_URL, false);
-  answers.deepseek_model = await promptText("deepseek_model", existingEnv.deepseek_model || DEFAULT_DEEPSEEK_MODEL, false);
+  answers.DEEPSEEK_MODEL = await promptText("DEEPSEEK_MODEL", existingEnv.DEEPSEEK_MODEL || existingEnv.deepseek_model || DEFAULT_DEEPSEEK_MODEL, false);
   answers.DEEPSEEK_REASONING_EFFORT = await promptText("DEEPSEEK_REASONING_EFFORT", existingEnv.DEEPSEEK_REASONING_EFFORT || "high", false);
+  answers.APP_HOST = await promptText("APP_HOST", existingEnv.APP_HOST || "127.0.0.1", false);
+  answers.APP_PORT = await promptText("APP_PORT", existingEnv.APP_PORT || "5173", false);
   return answers;
 }
 
@@ -168,18 +177,46 @@ async function readEnvFile() {
 }
 
 async function writeEnvFile(env) {
+  const defaults = getDefaultEnv(env);
   const lines = [
     `AMAP_WEB_SERVICE_KEY=${quoteEnv(env.AMAP_WEB_SERVICE_KEY)}`,
     `AMAP_JS_API_KEY=${quoteEnv(env.AMAP_JS_API_KEY)}`,
     `AMAP_JS_API_SECURITY_JS_CODE=${quoteEnv(env.AMAP_JS_API_SECURITY_JS_CODE)}`,
+    "",
+    `APP_HOST=${quoteEnv(defaults.APP_HOST)}`,
+    `APP_PORT=${quoteEnv(defaults.APP_PORT)}`,
+    `SCREENSHOT_FALLBACK_PORT=${quoteEnv(defaults.SCREENSHOT_FALLBACK_PORT)}`,
+    "",
+    `AMAP_POI_PAGE_SIZE=${quoteEnv(defaults.AMAP_POI_PAGE_SIZE)}`,
+    `AMAP_POI_MAX_PAGES=${quoteEnv(defaults.AMAP_POI_MAX_PAGES)}`,
+    `AMAP_POI_MAX_REQUEST_ATTEMPTS=${quoteEnv(defaults.AMAP_POI_MAX_REQUEST_ATTEMPTS)}`,
+    `AMAP_POI_REQUEST_TIMEOUT_MS=${quoteEnv(defaults.AMAP_POI_REQUEST_TIMEOUT_MS)}`,
+    `AMAP_POI_RETRY_BACKOFF_MS=${quoteEnv(defaults.AMAP_POI_RETRY_BACKOFF_MS)}`,
+    "",
     `LLM_PROVIDER=${quoteEnv(env.LLM_PROVIDER || DEFAULT_PROVIDER)}`,
     `DEEPSEEK_API_KEY=${quoteEnv(env.DEEPSEEK_API_KEY)}`,
     `DEEPSEEK_BASE_URL=${quoteEnv(env.DEEPSEEK_BASE_URL || DEFAULT_DEEPSEEK_BASE_URL)}`,
-    `deepseek_model=${quoteEnv(env.deepseek_model || DEFAULT_DEEPSEEK_MODEL)}`,
+    `DEEPSEEK_MODEL=${quoteEnv(env.DEEPSEEK_MODEL || env.deepseek_model || DEFAULT_DEEPSEEK_MODEL)}`,
     `DEEPSEEK_REASONING_EFFORT=${quoteEnv(env.DEEPSEEK_REASONING_EFFORT || "high")}`,
     `OPENAI_API_KEY=${quoteEnv(env.OPENAI_API_KEY || "")}`,
     `OPENAI_BASE_URL=${quoteEnv(env.OPENAI_BASE_URL || "")}`,
-    `openai_model=${quoteEnv(env.openai_model || "gpt-5.5")}`
+    `OPENAI_MODEL=${quoteEnv(env.OPENAI_MODEL || env.openai_model || DEFAULT_OPENAI_MODEL)}`,
+    "",
+    `LLM_MAX_SELECTED_BRANCHES=${quoteEnv(defaults.LLM_MAX_SELECTED_BRANCHES)}`,
+    `LLM_MAX_SELECTED_ATTRACTION_BRANCHES=${quoteEnv(defaults.LLM_MAX_SELECTED_ATTRACTION_BRANCHES)}`,
+    "",
+    `AI_MAX_TOOL_STEPS=${quoteEnv(defaults.AI_MAX_TOOL_STEPS)}`,
+    `AI_CONTEXT_MESSAGES=${quoteEnv(defaults.AI_CONTEXT_MESSAGES)}`,
+    `AI_MESSAGE_CHAR_LIMIT=${quoteEnv(defaults.AI_MESSAGE_CHAR_LIMIT)}`,
+    `AI_CLIENT_MESSAGE_HISTORY=${quoteEnv(defaults.AI_CLIENT_MESSAGE_HISTORY)}`,
+    "",
+    `SCREENSHOT_WIDTH=${quoteEnv(defaults.SCREENSHOT_WIDTH)}`,
+    `SCREENSHOT_HEIGHT=${quoteEnv(defaults.SCREENSHOT_HEIGHT)}`,
+    `SCREENSHOT_OUTPUT=${quoteEnv(defaults.SCREENSHOT_OUTPUT)}`,
+    `SCREENSHOT_READY_TIMEOUT_MS=${quoteEnv(defaults.SCREENSHOT_READY_TIMEOUT_MS)}`,
+    `SCREENSHOT_SETTLE_MS=${quoteEnv(defaults.SCREENSHOT_SETTLE_MS)}`,
+    "",
+    `AMAP_JS_API_VERSION=${quoteEnv(defaults.AMAP_JS_API_VERSION)}`
   ];
 
   await writeFile(ENV_PATH, `${lines.join("\n")}\n`, "utf8");
@@ -249,7 +286,7 @@ function runCommand(command, args, label) {
   });
 }
 
-function isPortInUse(port) {
+function isPortInUse(host, port) {
   return new Promise((resolve, reject) => {
     const server = createServer();
     server.once("error", (error) => {
@@ -262,13 +299,14 @@ function isPortInUse(port) {
     server.once("listening", () => {
       server.close(() => resolve(false));
     });
-    server.listen(port, "127.0.0.1");
+    server.listen(port, host);
   });
 }
 
 async function hasProjectServerHealth() {
+  const runtimeConfig = getRuntimeConfig(await readEnvFile());
   try {
-    const response = await fetch("http://127.0.0.1:5173/api/health");
+    const response = await fetch(`${appUrl(runtimeConfig)}api/health`);
     return response.ok;
   } catch {
     return false;

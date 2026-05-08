@@ -51,7 +51,8 @@ export function MapCanvas({
       }
 
       onStatus("正在加载高德地图...");
-      const AMap = amapRef.current ?? (await loadAmap(clientConfig.amapJsApiKey, clientConfig.amapJsApiSecurityJsCode));
+      const AMap =
+        amapRef.current ?? (await loadAmap(clientConfig.amapJsApiKey, clientConfig.amapJsApiSecurityJsCode, clientConfig.amapJsApiVersion));
       amapRef.current = AMap;
       if (cancelled) {
         return;
@@ -151,7 +152,17 @@ export function MapCanvas({
         overlaysRef.current = [];
       }
     };
-  }, [activeGroup, activeRouteId, clientConfig.amapJsApiKey, clientConfig.amapJsApiSecurityJsCode, mapState, onGroupSelect, onStatus, routes]);
+  }, [
+    activeGroup,
+    activeRouteId,
+    clientConfig.amapJsApiKey,
+    clientConfig.amapJsApiSecurityJsCode,
+    clientConfig.amapJsApiVersion,
+    mapState,
+    onGroupSelect,
+    onStatus,
+    routes
+  ]);
 
   return <div id="map" ref={mapElementRef} role="main" aria-label={`${mapState?.city ?? "城市"}攻略地图`} />;
 }

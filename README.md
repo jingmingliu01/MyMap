@@ -121,6 +121,7 @@ Required for AMap:
 AMAP_WEB_SERVICE_KEY=your_amap_web_service_key
 AMAP_JS_API_KEY=your_amap_js_api_key
 AMAP_JS_API_SECURITY_JS_CODE=your_amap_js_api_security_js_code
+AMAP_JS_API_VERSION=2.0
 ```
 
 Default LLM provider:
@@ -129,7 +130,7 @@ Default LLM provider:
 LLM_PROVIDER=deepseek
 DEEPSEEK_API_KEY=your_deepseek_api_key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-deepseek_model=deepseek-v4-flash
+DEEPSEEK_MODEL=deepseek-v4-flash
 DEEPSEEK_REASONING_EFFORT=high
 ```
 
@@ -139,7 +140,28 @@ OpenAI fallback:
 LLM_PROVIDER=openai
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_BASE_URL=
-openai_model=gpt-5.5
+OPENAI_MODEL=gpt-5.5
+```
+
+Useful runtime knobs:
+
+```bash
+APP_HOST=127.0.0.1
+APP_PORT=5173
+
+AMAP_POI_PAGE_SIZE=25
+AMAP_POI_MAX_PAGES=3
+LLM_MAX_SELECTED_BRANCHES=5
+LLM_MAX_SELECTED_ATTRACTION_BRANCHES=1
+
+AI_MAX_TOOL_STEPS=8
+AI_CONTEXT_MESSAGES=8
+AI_MESSAGE_CHAR_LIMIT=2000
+AI_CLIENT_MESSAGE_HISTORY=10
+
+SCREENSHOT_WIDTH=1920
+SCREENSHOT_HEIGHT=1080
+SCREENSHOT_OUTPUT=output/mymap.png
 ```
 
 ## API Links
@@ -193,7 +215,7 @@ These generated files are ignored by Git. Keep `data/seeds.example.json` as the 
 npm start              # One-command interactive workflow
 npm run fetch:places   # Query AMap POI candidates
 npm run merge:points   # LLM selection + deterministic merge
-npm run dev            # Start Next.js on 127.0.0.1:5173
+npm run dev            # Start Next.js using APP_HOST and APP_PORT
 npm run screenshot     # Export output/mymap.png
 npm run test           # Run focused state-model tests
 npm run check          # Type-check, test, and build

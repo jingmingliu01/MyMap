@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getFetchPlacesConfig, type FetchPlacesConfig } from "./shared/env";
 import type { PlaceBranch, PlaceGroup, SeedFile } from "./shared/schema";
 import { slugify } from "./shared/slug";
 
@@ -24,11 +25,6 @@ interface AmapPoiResponse {
   pois?: AmapPoi[];
 }
 
-const DEFAULT_PAGE_SIZE = 25;
-const DEFAULT_MAX_PAGES = 3;
-const DEFAULT_MAX_REQUEST_ATTEMPTS = 3;
-const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
-
 async function main() {
   const apiKey = process.env.AMAP_WEB_SERVICE_KEY;
   if (!apiKey) {
@@ -37,13 +33,14 @@ async function main() {
 
   const seedPath = process.argv[2] ?? "data/seeds.json";
   const outputDir = process.env.PLACES_OUTPUT_DIR ?? "data/places";
+  const fetchConfig = getFetchPlacesConfig();
   const seed = JSON.parse(await readFile(seedPath, "utf8")) as SeedFile;
 
   validateSeed(seed, seedPath);
   await mkdir(outputDir, { recursive: true });
 
   for (const item of seed.items) {
-    const pois = await searchAllPages(apiKey, seed.city, item);
+    const pois = await searchAllPages(apiKey, seed.city, item, fetchConfig);
     const branches = normalizeBranches(pois, seed.city);
     const group: PlaceGroup = {
       name: item,
@@ -70,22 +67,22 @@ function validateSeed(seed: SeedFile, seedPath: string) {
   }
 }
 
-async function searchAllPages(apiKey: string, city: string, keyword: string): Promise<AmapPoi[]> {
+async function searchAllPages(apiKey: string, city: string, keyword: string, config: FetchPlacesConfig): Promise<AmapPoi[]> {
   const results: AmapPoi[] = [];
 
-  for (let page = 1; page <= DEFAULT_MAX_PAGES; page += 1) {
+  for (let page = 1; page <= config.maxPages; page += 1) {
     const params = new URLSearchParams({
       key: apiKey,
       keywords: keyword,
       region: toCityRegion(city),
       city_limit: "true",
-      page_size: String(DEFAULT_PAGE_SIZE),
+      page_size: String(config.pageSize),
       page_num: String(page),
       output: "json"
     });
 
     const url = `https://restapi.amap.com/v5/place/text?${params.toString()}`;
-    const payload = await fetchAmapJson(url, keyword, page);
+    const payload = await fetchAmapJson(url, keyword, page, config);
     if (payload.status !== "1") {
       throw new Error(`AMap POI request failed for ${keyword}, page ${page}: ${payload.info}`);
     }
@@ -93,7 +90,7 @@ async function searchAllPages(apiKey: string, city: string, keyword: string): Pr
     const pois = payload.pois ?? [];
     results.push(...pois);
 
-    if (pois.length < DEFAULT_PAGE_SIZE) {
+    if (pois.length < config.pageSize) {
       break;
     }
   }
@@ -101,11 +98,11 @@ async function searchAllPages(apiKey: string, city: string, keyword: string): Pr
   return results;
 }
 
-async function fetchAmapJson(url: string, keyword: string, page: number): Promise<AmapPoiResponse> {
+async function fetchAmapJson(url: string, keyword: string, page: number, config: FetchPlacesConfig): Promise<AmapPoiResponse> {
   let lastError: unknown = null;
-  for (let attempt = 1; attempt <= DEFAULT_MAX_REQUEST_ATTEMPTS; attempt += 1) {
+  for (let attempt = 1; attempt <= config.maxRequestAttempts; attempt += 1) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), DEFAULT_REQUEST_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), config.requestTimeoutMs);
     try {
       const response = await fetch(url, { signal: controller.signal });
       if (!response.ok) {
@@ -114,8 +111,8 @@ async function fetchAmapJson(url: string, keyword: string, page: number): Promis
       return (await response.json()) as AmapPoiResponse;
     } catch (error) {
       lastError = error;
-      if (attempt < DEFAULT_MAX_REQUEST_ATTEMPTS) {
-        await delay(350 * attempt);
+      if (attempt < config.maxRequestAttempts) {
+        await delay(config.retryBackoffMs * attempt);
       }
     } finally {
       clearTimeout(timeout);

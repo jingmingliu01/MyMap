@@ -3,6 +3,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright";
+import { getRuntimeConfig, getScreenshotConfig, type RuntimeConfig, type ScreenshotConfig } from "./shared/env";
 
 interface ScreenshotOptions {
   width: number;
@@ -11,6 +12,8 @@ interface ScreenshotOptions {
 }
 
 async function main() {
+  const runtimeConfig = getRuntimeConfig();
+  const screenshotConfig = getScreenshotConfig();
   const key = process.env.AMAP_JS_API_KEY;
   if (!key) {
     throw new Error("Missing AMAP_JS_API_KEY. Copy .env.example to .env and set your AMap JS API key before running npm run screenshot.");
@@ -22,15 +25,15 @@ async function main() {
     );
   }
 
-  const options = parseArgs(process.argv.slice(2));
+  const options = parseArgs(process.argv.slice(2), screenshotConfig);
   await mkdir(path.dirname(options.output), { recursive: true });
 
-  const existingAddress = "http://127.0.0.1:5173/";
-  const temporaryAddress = "http://127.0.0.1:4173/";
+  const existingAddress = appAddress(runtimeConfig.host, runtimeConfig.port);
+  const temporaryAddress = appAddress(runtimeConfig.host, runtimeConfig.screenshotFallbackPort);
   const useExistingServer = await isServerHealthy(`${existingAddress}api/health`);
   const address = useExistingServer ? existingAddress : temporaryAddress;
-  const server = useExistingServer ? null : startLocalServer(4173);
-  await waitForServer(`${address}api/health`);
+  const server = useExistingServer ? null : startLocalServer(runtimeConfig.host, runtimeConfig.screenshotFallbackPort);
+  await waitForServer(`${address}api/health`, screenshotConfig);
 
   const browser = await chromium.launch();
   try {
@@ -44,26 +47,26 @@ async function main() {
     await page.waitForFunction(() => {
       const state = window.__MYMAP__;
       return state?.error || (state?.ready === true && state.markerCount > 0);
-    }, null, { timeout: 30_000 });
+    }, null, { timeout: screenshotConfig.readyTimeoutMs });
     const state = await page.evaluate(() => window.__MYMAP__);
     if (state?.error) {
       throw new Error(`Map page failed before screenshot: ${state.error}`);
     }
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(screenshotConfig.settleMs);
     await page.screenshot({ path: options.output, fullPage: false });
     console.log(`Wrote screenshot to ${options.output}`);
   } finally {
     await browser.close();
     if (server) {
-      await stopLocalServer(server);
+      await stopLocalServer(server, screenshotConfig);
     }
   }
 }
 
-function startLocalServer(port: number): ChildProcessWithoutNullStreams {
-  const child = spawn("npx", ["next", "dev", "--hostname", "127.0.0.1", "--port", String(port)], {
+function startLocalServer(host: string, port: number): ChildProcessWithoutNullStreams {
+  const child = spawn("npx", ["next", "dev", "--hostname", host, "--port", String(port)], {
     cwd: process.cwd(),
-    env: { ...process.env, PORT: String(port) },
+    env: { ...process.env, APP_HOST: host, APP_PORT: String(port), PORT: String(port) },
     stdio: "pipe"
   });
 
@@ -72,16 +75,16 @@ function startLocalServer(port: number): ChildProcessWithoutNullStreams {
   return child;
 }
 
-async function waitForServer(url: string) {
+async function waitForServer(url: string, config: ScreenshotConfig) {
   const startedAt = Date.now();
-  while (Date.now() - startedAt < 30_000) {
+  while (Date.now() - startedAt < config.serverStartupTimeoutMs) {
     if (await isServerHealthy(url)) {
       return;
     }
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, config.serverPollMs));
   }
 
-  throw new Error("Local map server did not start within 30 seconds.");
+  throw new Error(`Local map server did not start within ${config.serverStartupTimeoutMs}ms.`);
 }
 
 async function isServerHealthy(url: string): Promise<boolean> {
@@ -93,7 +96,7 @@ async function isServerHealthy(url: string): Promise<boolean> {
   }
 }
 
-async function stopLocalServer(child: ChildProcessWithoutNullStreams) {
+async function stopLocalServer(child: ChildProcessWithoutNullStreams, config: ScreenshotConfig) {
   if (child.exitCode !== null) {
     return;
   }
@@ -101,15 +104,15 @@ async function stopLocalServer(child: ChildProcessWithoutNullStreams) {
   child.kill("SIGTERM");
   await new Promise<void>((resolve) => {
     child.once("exit", () => resolve());
-    setTimeout(resolve, 2000);
+    setTimeout(resolve, config.serverShutdownTimeoutMs);
   });
 }
 
-function parseArgs(args: string[]): ScreenshotOptions {
+function parseArgs(args: string[], defaults: ScreenshotConfig): ScreenshotOptions {
   const options: ScreenshotOptions = {
-    width: 1920,
-    height: 1080,
-    output: "output/mymap.png"
+    width: defaults.width,
+    height: defaults.height,
+    output: defaults.output
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -133,6 +136,14 @@ function parseArgs(args: string[]): ScreenshotOptions {
   }
 
   return options;
+}
+
+function appAddress(host: string, port: number): string {
+  return `http://${formatHostForUrl(host)}:${port}/`;
+}
+
+function formatHostForUrl(host: RuntimeConfig["host"]): string {
+  return host.includes(":") && !host.startsWith("[") ? `[${host}]` : host;
 }
 
 declare global {

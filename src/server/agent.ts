@@ -5,6 +5,7 @@ import type {
   ChatCompletionToolMessageParam
 } from "openai/resources/chat/completions";
 import { z } from "zod";
+import { getAgentConfig, type AgentConfig } from "../shared/env";
 import type { ChatMessage, MapPoint } from "../shared/schema";
 import { createLlmClient, getLlmConfig, llmChatOptions } from "../shared/llm";
 import { MAP_EDITING_AGENT_PROMPT_PATH, readPrompt } from "../shared/prompts";
@@ -147,6 +148,7 @@ const toolHandlers: Record<string, ToolHandler> = {
 
 export async function createAiPreview(message: string, messages: ChatMessage[]) {
   const llmConfig = getLlmConfig();
+  const agentConfig = getAgentConfig();
   const openai = createLlmClient(llmConfig);
   const agentPrompt = await readPrompt(MAP_EDITING_AGENT_PROMPT_PATH);
 
@@ -155,7 +157,7 @@ export async function createAiPreview(message: string, messages: ChatMessage[]) 
       role: "system",
       content: agentPrompt
     },
-    ...sanitizeChatMessages(messages),
+    ...sanitizeChatMessages(messages, agentConfig),
     {
       role: "user",
       content: message
@@ -163,7 +165,7 @@ export async function createAiPreview(message: string, messages: ChatMessage[]) 
   ];
 
   let finalMessage = "";
-  for (let step = 0; step < 8; step += 1) {
+  for (let step = 0; step < agentConfig.maxToolSteps; step += 1) {
     const response = await openai.chat.completions.create({
       model: llmConfig.model,
       messages: agentMessages,
@@ -302,13 +304,17 @@ async function edit_map_points_json(args: Record<string, unknown>): Promise<Tool
   };
 }
 
-function sanitizeChatMessages(messages: ChatMessage[]): Array<{ role: "user" | "assistant"; content: string }> {
+function sanitizeChatMessages(messages: ChatMessage[], config: AgentConfig): Array<{ role: "user" | "assistant"; content: string }> {
+  if (config.contextMessages === 0) {
+    return [];
+  }
+
   return messages
     .filter((message) => (message.role === "user" || message.role === "assistant") && typeof message.content === "string" && message.content.trim())
-    .slice(-8)
+    .slice(-config.contextMessages)
     .map((message) => ({
       role: message.role,
-      content: message.content.trim().slice(0, 2000)
+      content: message.content.trim().slice(0, config.messageCharLimit)
     }));
 }
 
