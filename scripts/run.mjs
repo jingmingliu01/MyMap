@@ -124,7 +124,7 @@ function promptText(key, defaultLabel, secret) {
 }
 
 function promptSecret(question) {
-  process.stdout.write(question);
+  process.stdout.write(`${question}<hidden input, press Enter when done> `);
 
   return new Promise((resolve) => {
     const rl = readline.createInterface({
@@ -136,7 +136,7 @@ function promptSecret(question) {
     rl.stdoutMuted = true;
     rl._writeToOutput = function writeToOutput(stringToWrite) {
       if (rl.stdoutMuted && stringToWrite !== "\n" && stringToWrite !== "\r\n") {
-        rl.output.write("*".repeat(stringToWrite.length));
+        rl.output.write("•".repeat(stringToWrite.length));
       } else {
         rl.output.write(stringToWrite);
       }
@@ -144,8 +144,9 @@ function promptSecret(question) {
 
     rl.question("", (answer) => {
       rl.close();
-      process.stdout.write("\n");
-      resolve(answer.trim());
+      const value = answer.trim();
+      process.stdout.write(value ? `\n${question}<saved ${value.length} chars>\n` : `\n${question}<empty>\n`);
+      resolve(value);
     });
   });
 }

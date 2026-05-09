@@ -9,17 +9,11 @@ import type { MapPointsFile, PlaceBranch, PlaceGroup, PlaceSelectionFile, PlaceT
 import { CURRENT_POINTS_PATH, GENERATED_POINTS_PATH, LEGACY_POINTS_PATH, ROUTES_PATH, SELECTIONS_DIR } from "./shared/paths";
 import { createLlmClient, getLlmConfig, llmChatOptions, type LlmConfig } from "./shared/llm";
 import { POI_CANDIDATE_SELECTION_PROMPT_PATH, readPrompt } from "./shared/prompts";
+import { LLM_SELECTION_OUTPUT_CONTRACT, createSelectionPromptHash, maxSelectedForGroup } from "./shared/selection-policy";
 import { slugify } from "./shared/slug";
 
 const PLACE_TYPES = ["restaurant", "cafe", "attraction", "mall", "place"] as const;
 const GROUP_COLORS = ["#d84f3a", "#247b5f", "#4d64c8", "#8a5a32", "#8f4fc7", "#cc7a1f", "#3d7f89", "#b9486a"];
-const LLM_SELECTION_OUTPUT_CONTRACT = {
-  group_type: "restaurant | cafe | attraction | mall | place",
-  selected_branch_ids: "number[] of candidate ids to keep",
-  rejected_branch_ids: "number[] of candidate ids to exclude",
-  notes: "short explanation"
-};
-
 const BranchSelection = z.object({
   group_type: z.enum(PLACE_TYPES).describe("The inferred semantic type of the requested place group."),
   selected_branch_ids: z.array(z.number().int().positive()).describe("Branch ids that should remain in the final map."),
@@ -56,7 +50,7 @@ async function main() {
   const selectionConfig = getSelectionConfig();
   const openai = createLlmClient(llmConfig);
   const selectionPrompt = await readPrompt(POI_CANDIDATE_SELECTION_PROMPT_PATH);
-  const promptHash = hashText(`${selectionPrompt}\n${JSON.stringify(LLM_SELECTION_OUTPUT_CONTRACT)}\n${JSON.stringify(selectionConfig)}`);
+  const promptHash = createSelectionPromptHash(selectionPrompt, selectionConfig);
 
   console.log(`Filtering candidate branches with ${llmConfig.provider} model: ${llmConfig.model}`);
   console.log(
@@ -270,10 +264,6 @@ async function selectRelevantBranches(
   return sanitizeSelection(parsed, group.branches, maxSelectedForGroup(parsed.group_type, selectionConfig));
 }
 
-function maxSelectedForGroup(groupType: PlaceType, config: SelectionConfig): number {
-  return groupType === "attraction" ? config.maxSelectedAttractionBranches : config.maxSelectedBranches;
-}
-
 function sanitizeSelection(selection: BranchSelectionResult, branches: PlaceBranch[], maxSelected: number): BranchSelectionResult {
   const validIds = new Set(branches.map((branch) => branch.id));
   const selected_branch_ids = unique(selection.selected_branch_ids).filter((id) => validIds.has(id)).slice(0, maxSelected);
@@ -295,10 +285,6 @@ function unique(values: number[]): number[] {
   return Array.from(new Set(values));
 }
 
-function hashText(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
-}
-
 function parseJsonObject(content: string): unknown {
   try {
     return JSON.parse(content);
@@ -309,6 +295,10 @@ function parseJsonObject(content: string): unknown {
     }
     return JSON.parse(match[0]);
   }
+}
+
+function hashText(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
 }
 
 async function writeJson(filePath: string, value: unknown) {

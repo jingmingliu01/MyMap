@@ -3,10 +3,11 @@ import type { MapPoint, MapPointsFile, MapRoutesFile } from "../../src/shared/sc
 import { messageFromError } from "../lib/errors";
 import { loadAmap } from "../map/amap-loader";
 import { markerHtml, markerTitle } from "../map/marker";
-import type { AMapMap, AMapNamespace } from "../types/amap";
+import type { AMapMap, AMapNamespace, AMapOverlay } from "../types/amap";
 import type { ClientConfig } from "../types/client-config";
 
 const routePadding = [150, 120, 120, 120];
+const mapFeatures = ["bg", "road", "building", "point"];
 
 export function MapCanvas({
   mapState,
@@ -28,7 +29,7 @@ export function MapCanvas({
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<AMapMap | null>(null);
   const amapRef = useRef<AMapNamespace | null>(null);
-  const overlaysRef = useRef<unknown[]>([]);
+  const overlaysRef = useRef<AMapOverlay[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,8 +65,8 @@ export function MapCanvas({
           center: getAverageCenter(visiblePoints),
           resizeEnable: true,
           viewMode: "2D",
-          features: ["bg", "road", "building", "point"]
-        });
+          features: mapFeatures
+        } as Partial<AMap.MapOptions> & { resizeEnable: boolean });
       }
 
       if (overlaysRef.current.length > 0) {
@@ -76,7 +77,7 @@ export function MapCanvas({
       const visibleRoutes = activeRouteId ? routes.routes.filter((route) => route.id === activeRouteId) : routes.routes;
       const routePointIds = new Set(visibleRoutes.flatMap((route) => route.point_ids));
       const routeOverlays = visibleRoutes.flatMap((route) => {
-        const path = route.point_ids
+        const path: Array<[number, number]> = route.point_ids
           .map((pointId) => pointsById.get(pointId))
           .filter((point): point is MapPoint => Boolean(point))
           .map((point) => [point.longitude, point.latitude]);
