@@ -36,7 +36,7 @@ body {
   pointer-events: none;
 }
 
-#group-filter,
+.filter-row,
 .route-filter {
   display: flex;
   flex-wrap: wrap;
@@ -50,7 +50,7 @@ body {
   min-width: 0;
 }
 
-.group-chip,
+.filter-chip,
 .route-chip {
   flex: 0 0 auto;
   display: inline-flex;
@@ -77,12 +77,12 @@ body {
   max-width: 280px;
 }
 
-.group-chip:hover,
+.filter-chip:hover,
 .route-chip:hover {
   transform: translateY(-1px);
 }
 
-.group-chip.active,
+.filter-chip.active,
 .route-chip.active {
   border-width: 3px;
   border-color: var(--chip-color, #5f6775);
@@ -90,7 +90,7 @@ body {
   box-shadow: none;
 }
 
-.group-chip-dot {
+.filter-chip-dot {
   flex: 0 0 auto;
   width: 12px;
   height: 12px;
@@ -111,11 +111,11 @@ body {
   background: linear-gradient(90deg, #d84f3a 0 24%, #247b5f 24% 50%, #4d64c8 50% 74%, #8a5a32 74% 100%);
 }
 
-.group-chip-dot.all {
+.filter-chip-dot.all {
   background: linear-gradient(135deg, #d84f3a 0 24%, #247b5f 24% 50%, #4d64c8 50% 74%, #8a5a32 74% 100%);
 }
 
-.group-chip-label,
+.filter-chip-label,
 .route-chip-label {
   min-width: 0;
   overflow: hidden;
@@ -123,7 +123,7 @@ body {
   white-space: nowrap;
 }
 
-.group-chip-count,
+.filter-chip-count,
 .route-chip-count {
   flex: 0 0 auto;
   min-width: 20px;
@@ -133,6 +133,11 @@ body {
   font-size: 12px;
   line-height: 18px;
   padding: 0 6px;
+}
+
+.filter-chip.utility {
+  border-style: dashed;
+  color: #4b5563;
 }
 
 #status {

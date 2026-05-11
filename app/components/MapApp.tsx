@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import type { ChatMessage, MapStateResponse } from "../../src/shared/schema";
+import { useCallback, useMemo, useState } from "react";
+import type { ChatMessage, MapPointsFile, MapStateResponse } from "../../src/shared/schema";
 import type { ClientConfig } from "../types/client-config";
 import { AiPanel } from "./AiPanel";
-import { GroupFilter } from "./GroupFilter";
+import { CategoryFilter, PlaceFilter, TagFilter } from "./MapFilters";
 import { MapCanvas } from "./MapCanvas";
 import { RouteFilter } from "./RouteFilter";
 import { useAiChat } from "../hooks/useAiChat";
@@ -12,8 +12,11 @@ import { useMapState } from "../hooks/useMapState";
 import { messageFromError } from "../lib/errors";
 
 export function MapApp({ initialState, clientConfig }: { initialState: MapStateResponse; clientConfig: ClientConfig }) {
-  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [activeTagId, setActiveTagId] = useState<string | null>(null);
+  const [activePlaceId, setActivePlaceId] = useState<string | null>(null);
   const [activeRouteId, setActiveRouteId] = useState<string | null>(null);
+  const [placesCollapsed, setPlacesCollapsed] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
@@ -40,7 +43,7 @@ export function MapApp({ initialState, clientConfig }: { initialState: MapStateR
     setStatus,
     setError,
     onPreviewReady: () => {
-      setActiveGroup(null);
+      clearMapFilters();
       setActiveRouteId(null);
     },
     clientMessageHistory: clientConfig.aiClientMessageHistory
@@ -65,8 +68,8 @@ export function MapApp({ initialState, clientConfig }: { initialState: MapStateR
     setIsWorking(true);
     try {
       await revertPreview();
-      setAiResponse("已恢复到 generated 状态。");
-      setActiveGroup(null);
+      setAiResponse("已放弃预览，当前地图保持不变。");
+      clearMapFilters();
       setActiveRouteId(null);
     } catch (caught) {
       const message = messageFromError(caught);
@@ -77,19 +80,69 @@ export function MapApp({ initialState, clientConfig }: { initialState: MapStateR
     }
   }, [revertPreview, setAiResponse, setError, setIsWorking, setStatus]);
 
-  const handleMarkerGroupSelect = useCallback((groupName: string) => {
-    setActiveGroup(groupName);
+  const handleMarkerPlaceSelect = useCallback((placeId: string) => {
+    setActivePlaceId(placeId);
     setActiveRouteId(null);
   }, []);
+
+  const basePoints = visiblePoints;
+  const categoryTagFilteredPoints = useMemo(
+    () => basePoints.filter((point) => matchesCategory(point, activeCategoryId) && matchesTag(point, activeTagId)),
+    [activeCategoryId, activeTagId, basePoints]
+  );
+  const displayedMapState: MapPointsFile | null = useMemo(
+    () =>
+      mapState
+        ? {
+            ...mapState,
+            points: mapState.points.map((point) => ({
+              ...point,
+              visible:
+                point.visible !== false &&
+                matchesCategory(point, activeCategoryId) &&
+                matchesTag(point, activeTagId) &&
+                matchesPlace(point, activePlaceId)
+            }))
+          }
+        : null,
+    [activeCategoryId, activePlaceId, activeTagId, mapState]
+  );
+
+  function clearMapFilters() {
+    setActiveCategoryId(null);
+    setActiveTagId(null);
+    setActivePlaceId(null);
+  }
 
   return (
     <>
       <div className="map-filter-panel" aria-label="地图筛选">
-        <GroupFilter
-          points={visiblePoints}
-          activeGroup={activeGroup}
-          onSelect={(groupName) => {
-            setActiveGroup(groupName);
+        <CategoryFilter
+          points={basePoints}
+          activeCategoryId={activeCategoryId}
+          onSelect={(categoryId) => {
+            setActiveCategoryId(categoryId);
+            setActivePlaceId(null);
+            setActiveRouteId(null);
+          }}
+        />
+        <TagFilter
+          points={basePoints}
+          routes={routeState.routes}
+          activeTagId={activeTagId}
+          onSelect={(tagId) => {
+            setActiveTagId(tagId);
+            setActivePlaceId(null);
+            setActiveRouteId(null);
+          }}
+        />
+        <PlaceFilter
+          points={categoryTagFilteredPoints}
+          activePlaceId={activePlaceId}
+          collapsed={placesCollapsed}
+          onToggleCollapsed={() => setPlacesCollapsed((current) => !current)}
+          onSelect={(placeId) => {
+            setActivePlaceId(placeId);
             setActiveRouteId(null);
           }}
         />
@@ -98,17 +151,17 @@ export function MapApp({ initialState, clientConfig }: { initialState: MapStateR
           activeRouteId={activeRouteId}
           onSelect={(routeId) => {
             setActiveRouteId(routeId);
-            setActiveGroup(null);
+            setActivePlaceId(null);
           }}
         />
       </div>
       <MapCanvas
-        mapState={mapState}
+        mapState={displayedMapState}
         routes={routeState}
-        activeGroup={activeGroup}
+        activePlaceId={activePlaceId}
         activeRouteId={activeRouteId}
         clientConfig={clientConfig}
-        onGroupSelect={handleMarkerGroupSelect}
+        onPlaceSelect={handleMarkerPlaceSelect}
         onStatus={setStatus}
       />
       <AiPanel
@@ -127,4 +180,16 @@ export function MapApp({ initialState, clientConfig }: { initialState: MapStateR
       </div>
     </>
   );
+}
+
+function matchesCategory(point: { category_ids?: string[] }, categoryId: string | null): boolean {
+  return !categoryId || Boolean(point.category_ids?.includes(categoryId));
+}
+
+function matchesTag(point: { tag_ids?: string[] }, tagId: string | null): boolean {
+  return !tagId || Boolean(point.tag_ids?.includes(tagId));
+}
+
+function matchesPlace(point: { place_id: string }, placeId: string | null): boolean {
+  return !placeId || point.place_id === placeId;
 }

@@ -7,7 +7,19 @@ const GENERATED_DATA_FILES = [
   "data/map-state.json",
   "data/routes.json",
   "data/map-points.preview.json",
-  "data/routes.preview.json"
+  "data/routes.preview.json",
+  "data/render/map-points.json",
+  "data/render/routes.json",
+  "data/preview/pending-edit.json",
+  "data/preview/map-points.json",
+  "data/preview/routes.json",
+  "data/workspace/places.json",
+  "data/workspace/branches.json",
+  "data/workspace/categories.json",
+  "data/workspace/tags.json",
+  "data/workspace/tag-assignments.json",
+  "data/workspace/routes.json",
+  "data/workspace/imports.json"
 ];
 
 async function main() {

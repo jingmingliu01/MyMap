@@ -9,7 +9,7 @@ import { getAgentConfig, type AgentConfig } from "../shared/env";
 import type { ChatMessage, MapPoint } from "../shared/schema";
 import { createLlmClient, getLlmConfig, llmChatOptions } from "../shared/llm";
 import { MAP_EDITING_AGENT_PROMPT_PATH, readPrompt } from "../shared/prompts";
-import { PREVIEW_POINTS_PATH, PREVIEW_ROUTES_PATH } from "../shared/paths";
+import { PREVIEW_RENDER_POINTS_PATH, PREVIEW_RENDER_ROUTES_PATH } from "../shared/paths";
 import {
   readEditableMapState,
   readEditableRoutes,
@@ -70,7 +70,7 @@ const agentTools: ChatCompletionTool[] = [
     function: {
       name: "edit_routes_json",
       description:
-        "Write a route preview JSON. Use this for route-only requests. It writes data/routes.preview.json only and never changes map points or places.",
+        "Write a route preview JSON. Use this for route-only requests. It writes data/preview/routes.json only and never changes map points or places.",
       parameters: {
         type: "object",
         properties: {
@@ -102,7 +102,7 @@ const agentTools: ChatCompletionTool[] = [
     function: {
       name: "read_map_points_json",
       description:
-        "Read the current editable map-state JSON. Use only when the user explicitly asks to filter, hide, restore, or change displayed map points.",
+        "Read the current editable render map-points JSON. Use only when the user explicitly asks to filter, hide, restore, or change displayed map points.",
       parameters: {
         type: "object",
         properties: {},
@@ -115,7 +115,7 @@ const agentTools: ChatCompletionTool[] = [
     function: {
       name: "edit_map_points_json",
       description:
-        "Write a map-state preview by changing point visibility only. Use only when the user explicitly asks to filter, hide, restore, or keep a subset of map points. For requests like 'only keep the Y near X', treat Y as the target group and keep all unrelated groups unchanged.",
+        "Write a map-points preview by changing point visibility only. Use only when the user explicitly asks to filter, hide, restore, or keep a subset of map points. For requests like 'only keep the Y near X', treat Y as the target Place and keep all unrelated Places unchanged.",
       parameters: {
         type: "object",
         properties: {
@@ -229,7 +229,8 @@ async function read_routes_json(): Promise<ToolResult> {
     .filter((point) => point.visible !== false)
     .map((point) => ({
       id: point.id,
-      group_name: point.group_name,
+      place_id: point.place_id,
+      place_name: point.place_name,
       branch_name: point.branch_name,
       label: point.label,
       district: point.district,
@@ -255,7 +256,7 @@ async function edit_routes_json(args: Record<string, unknown>): Promise<ToolResu
 
   return {
     ok: true,
-    message: `Wrote ${routes.routes.length} route(s) to ${PREVIEW_ROUTES_PATH}.`,
+    message: `Wrote ${routes.routes.length} route(s) to ${PREVIEW_RENDER_ROUTES_PATH}.`,
     data: routes
   };
 }
@@ -264,7 +265,7 @@ async function read_map_points_json(): Promise<ToolResult> {
   const mapState = await readEditableMapState();
   return {
     ok: true,
-    message: "Read editable map-state preview context.",
+    message: "Read editable map-points preview context.",
     data: mapState
   };
 }
@@ -299,7 +300,7 @@ async function edit_map_points_json(args: Record<string, unknown>): Promise<Tool
 
   return {
     ok: true,
-    message: `Wrote ${visibilityById.size} point visibility update(s) to ${PREVIEW_POINTS_PATH}.`,
+    message: `Wrote ${visibilityById.size} point visibility update(s) to ${PREVIEW_RENDER_POINTS_PATH}.`,
     data: nextMapState
   };
 }

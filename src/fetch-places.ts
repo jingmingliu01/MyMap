@@ -2,13 +2,14 @@ import "dotenv/config";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getFetchPlacesConfig, type FetchPlacesConfig } from "./shared/env";
-import type { PlaceBranch, PlaceGroup, SeedFile } from "./shared/schema";
+import type { PlaceBranch, PlaceSourceFile, SeedFile } from "./shared/schema";
 import { slugify } from "./shared/slug";
 
 interface AmapPoi {
   id?: string;
   name?: string;
   type?: string;
+  typecode?: string;
   address?: string | string[];
   adname?: string;
   cityname?: string | string[];
@@ -42,7 +43,7 @@ async function main() {
   for (const item of seed.items) {
     const pois = await searchAllPages(apiKey, seed.city, item, fetchConfig);
     const branches = normalizeBranches(pois, seed.city);
-    const group: PlaceGroup = {
+    const placeFile: PlaceSourceFile = {
       name: item,
       city: seed.city,
       type: "place",
@@ -50,7 +51,7 @@ async function main() {
     };
 
     const filePath = path.join(outputDir, `${slugify(item)}.json`);
-    await writeFile(filePath, `${JSON.stringify(group, null, 2)}\n`, "utf8");
+    await writeFile(filePath, `${JSON.stringify(placeFile, null, 2)}\n`, "utf8");
     console.log(`${item}: wrote ${branches.length} branches to ${filePath}`);
   }
 }
@@ -166,7 +167,13 @@ function normalizeBranches(pois: AmapPoi[], city: string): PlaceBranch[] {
       longitude: location.longitude,
       latitude: location.latitude,
       coordinate_system: "GCJ-02",
-      map_provider: "amap"
+      map_provider: "amap",
+      provider_place_id: normalizeText(poi.id),
+      provider_type: normalizeText(poi.type),
+      provider_typecode: normalizeText(poi.typecode),
+      provider_city: normalizeText(poi.cityname),
+      provider_citycode: normalizeText(poi.citycode),
+      provider_adcode: normalizeText(poi.adcode)
     });
   }
 

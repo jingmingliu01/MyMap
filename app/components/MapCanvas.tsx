@@ -12,18 +12,18 @@ const mapFeatures = ["bg", "road", "building", "point"];
 export function MapCanvas({
   mapState,
   routes,
-  activeGroup,
+  activePlaceId,
   activeRouteId,
   clientConfig,
-  onGroupSelect,
+  onPlaceSelect,
   onStatus
 }: {
   mapState: MapPointsFile | null;
   routes: MapRoutesFile;
-  activeGroup: string | null;
+  activePlaceId: string | null;
   activeRouteId: string | null;
   clientConfig: ClientConfig;
-  onGroupSelect: (groupName: string) => void;
+  onPlaceSelect: (placeId: string) => void;
   onStatus: (message: string) => void;
 }) {
   const mapElementRef = useRef<HTMLDivElement | null>(null);
@@ -105,11 +105,12 @@ export function MapCanvas({
           offset: new AMap.Pixel(0, 0),
           anchor: "center",
           title: markerTitle(point),
-          content: markerHtml(point, activeGroup)
+          content: markerHtml(point, activePlaceId)
         });
         marker.on("click", () => {
-          if (activeGroup !== point.group_name) {
-            onGroupSelect(point.group_name);
+          const placeId = point.place_id;
+          if (activePlaceId !== placeId) {
+            onPlaceSelect(placeId);
           }
         });
         return marker;
@@ -131,8 +132,11 @@ export function MapCanvas({
                 return point ? routePointIds.has(point.id) : false;
               })
             ]
-          : activeGroup
-            ? markers.filter((_, index) => visiblePoints[index]?.group_name === activeGroup)
+          : activePlaceId
+            ? markers.filter((_, index) => {
+                const point = visiblePoints[index];
+                return point ? point.place_id === activePlaceId : false;
+              })
             : overlays;
         mapRef.current.setFitView(fitTargets.length > 0 ? fitTargets : overlays, false, routePadding, 16);
         onStatus("");
@@ -154,13 +158,13 @@ export function MapCanvas({
       }
     };
   }, [
-    activeGroup,
+    activePlaceId,
     activeRouteId,
     clientConfig.amapJsApiKey,
     clientConfig.amapJsApiSecurityJsCode,
     clientConfig.amapJsApiVersion,
     mapState,
-    onGroupSelect,
+    onPlaceSelect,
     onStatus,
     routes
   ]);

@@ -1,133 +1,102 @@
 import { existsSync } from "node:fs";
-import { rm } from "node:fs/promises";
-import type { MapPointsFile, MapRoute, MapRoutesFile } from "../shared/schema";
+import type { MapPointsFile, MapRoute, MapRoutesFile, PendingEditFile, WorkspaceOperation } from "../shared/schema";
 import {
-  CURRENT_POINTS_PATH,
-  GENERATED_POINTS_PATH,
-  LEGACY_POINTS_PATH,
-  PREVIEW_POINTS_PATH,
-  PREVIEW_ROUTES_PATH,
-  ROUTES_PATH
+  PENDING_EDIT_PATH,
+  PREVIEW_RENDER_POINTS_PATH,
+  PREVIEW_RENDER_ROUTES_PATH,
+  RENDER_POINTS_PATH,
+  RENDER_ROUTES_PATH
 } from "../shared/paths";
+import { readJson } from "./json";
 import { slugify } from "../shared/slug";
-import { readJson, writeJson } from "./json";
+import {
+  applyOperations,
+  applyPendingEdit,
+  clearPreview,
+  ensureWorkspaceFiles,
+  readWorkspace,
+  regenerateRenderArtifacts,
+  renderWorkspace,
+  workspaceRoutesFromMapRoutes,
+  writePendingPreview
+} from "./workspace";
 
 export async function ensureStateFiles() {
-  if (!existsSync(GENERATED_POINTS_PATH)) {
-    if (!existsSync(LEGACY_POINTS_PATH)) {
-      throw new Error(`Missing ${GENERATED_POINTS_PATH}. Run npm run merge:points first.`);
-    }
-    await writeJson(GENERATED_POINTS_PATH, await readJson(LEGACY_POINTS_PATH));
-  }
-
-  if (!existsSync(CURRENT_POINTS_PATH)) {
-    await writeJson(CURRENT_POINTS_PATH, await readJson(GENERATED_POINTS_PATH));
-  }
-
-  if (!existsSync(ROUTES_PATH)) {
-    await writeJson(ROUTES_PATH, { routes: [] });
-  }
+  await ensureWorkspaceFiles();
 }
 
 export async function readFullState() {
   await ensureStateFiles();
   return {
-    generated: await readJson<MapPointsFile>(GENERATED_POINTS_PATH),
-    current: await readJson<MapPointsFile>(CURRENT_POINTS_PATH),
-    preview: existsSync(PREVIEW_POINTS_PATH) ? await readJson<MapPointsFile>(PREVIEW_POINTS_PATH) : null,
-    routes: await readJson<MapRoutesFile>(ROUTES_PATH),
-    preview_routes: existsSync(PREVIEW_ROUTES_PATH) ? await readJson<MapRoutesFile>(PREVIEW_ROUTES_PATH) : null
+    rendered: await readJson<MapPointsFile>(RENDER_POINTS_PATH),
+    preview: existsSync(PREVIEW_RENDER_POINTS_PATH) ? await readJson<MapPointsFile>(PREVIEW_RENDER_POINTS_PATH) : null,
+    routes: await readJson<MapRoutesFile>(RENDER_ROUTES_PATH),
+    preview_routes: existsSync(PREVIEW_RENDER_ROUTES_PATH) ? await readJson<MapRoutesFile>(PREVIEW_RENDER_ROUTES_PATH) : null
   };
 }
 
 export async function readEditableMapState(): Promise<MapPointsFile> {
   await ensureStateFiles();
-  return existsSync(PREVIEW_POINTS_PATH) ? await readJson<MapPointsFile>(PREVIEW_POINTS_PATH) : await readJson<MapPointsFile>(CURRENT_POINTS_PATH);
+  if (existsSync(PREVIEW_RENDER_POINTS_PATH)) {
+    return readJson<MapPointsFile>(PREVIEW_RENDER_POINTS_PATH);
+  }
+  return readJson<MapPointsFile>(RENDER_POINTS_PATH);
 }
 
 export async function readEditableRoutes(): Promise<MapRoutesFile> {
   await ensureStateFiles();
-  return existsSync(PREVIEW_ROUTES_PATH) ? await readJson<MapRoutesFile>(PREVIEW_ROUTES_PATH) : await readJson<MapRoutesFile>(ROUTES_PATH);
+  if (existsSync(PREVIEW_RENDER_ROUTES_PATH)) {
+    return readJson<MapRoutesFile>(PREVIEW_RENDER_ROUTES_PATH);
+  }
+  return readJson<MapRoutesFile>(RENDER_ROUTES_PATH);
 }
 
 export async function writePreviewMapState(mapState: MapPointsFile) {
-  await writeJson(PREVIEW_POINTS_PATH, mapState);
+  const rendered = await readJson<MapPointsFile>(RENDER_POINTS_PATH);
+  const operations = rendered.points.flatMap((point): WorkspaceOperation[] => {
+    const nextPoint = mapState.points.find((candidate) => candidate.id === point.id);
+    if (!nextPoint || nextPoint.visible === false) {
+      return [{ type: "archive_branch", branch_id: point.branch_stable_id ?? point.id }];
+    }
+    return [];
+  });
+  await appendPendingOperations("预览地图地点归档变更。", operations, { mapPoints: mapState });
 }
 
 export async function writePreviewRoutes(routes: MapRoutesFile) {
-  await writeJson(PREVIEW_ROUTES_PATH, routes);
+  const operations: WorkspaceOperation[] = [{ type: "replace_routes", routes: workspaceRoutesFromMapRoutes(routes.routes) }];
+  await appendPendingOperations("预览路线变更。", operations, { routes });
 }
 
 export async function applyPreview() {
-  const hasPointPreview = existsSync(PREVIEW_POINTS_PATH);
-  const hasRoutePreview = existsSync(PREVIEW_ROUTES_PATH);
-  if (!hasPointPreview && !hasRoutePreview) {
-    throw new Error("No preview exists. Ask the AI for an edit before applying.");
+  await applyPendingEdit();
+}
+
+export async function revertPreview() {
+  await clearPreview();
+  await regenerateRenderArtifacts();
+}
+
+async function appendPendingOperations(summary: string, operations: WorkspaceOperation[], preview: { mapPoints?: MapPointsFile; routes?: MapRoutesFile }) {
+  if (operations.length === 0) {
+    return;
   }
 
-  await ensureStateFiles();
-  const mapState = hasPointPreview ? await readJson<MapPointsFile>(PREVIEW_POINTS_PATH) : await readJson<MapPointsFile>(CURRENT_POINTS_PATH);
-  const routes = hasRoutePreview ? await readJson<MapRoutesFile>(PREVIEW_ROUTES_PATH) : await readJson<MapRoutesFile>(ROUTES_PATH);
-  const normalized = normalizeAppliedMapState(mapState, routes);
-
-  await writeJson(CURRENT_POINTS_PATH, normalized.mapState);
-  await writeJson(LEGACY_POINTS_PATH, normalized.mapState);
-  await writeJson(ROUTES_PATH, normalized.routes);
-  await clearPreview();
-}
-
-export async function revertToGenerated() {
-  const generated = await readJson<MapPointsFile>(GENERATED_POINTS_PATH);
-  await writeJson(CURRENT_POINTS_PATH, generated);
-  await writeJson(LEGACY_POINTS_PATH, generated);
-  await writeJson(ROUTES_PATH, { routes: [] });
-  await clearPreview();
-}
-
-async function clearPreview() {
-  await Promise.all([rm(PREVIEW_POINTS_PATH, { force: true }), rm(PREVIEW_ROUTES_PATH, { force: true })]);
-}
-
-export function normalizeAppliedMapState(mapState: MapPointsFile, routes: MapRoutesFile): { mapState: MapPointsFile; routes: MapRoutesFile } {
-  const idMap = new Map<string, string>();
-  const nextBranchIdByGroup = new Map<string, number>();
-  const normalizedPoints = mapState.points.flatMap((point) => {
-    if (point.visible === false) {
-      return [];
-    }
-    const nextBranchId = nextBranchIdByGroup.get(point.group_name) ?? 1;
-    nextBranchIdByGroup.set(point.group_name, nextBranchId + 1);
-    const nextId = `${slugify(point.group_name)}-${nextBranchId}`;
-    idMap.set(point.id, nextId);
-
-    return [
-      {
-        ...point,
-        id: nextId,
-        branch_id: nextBranchId,
-        label: String(nextBranchId),
-        visible: true
-      }
-    ];
-  });
-  const visibleIds = new Set(normalizedPoints.map((point) => point.id));
-
-  const normalizedRoutes = {
-    routes: routes.routes
-      .map((route) => ({
-        ...route,
-        point_ids: unique(route.point_ids.map((pointId) => idMap.get(pointId)).filter((pointId): pointId is string => Boolean(pointId && visibleIds.has(pointId))))
-      }))
-      .filter((route) => route.point_ids.length >= 2)
+  const existing = existsSync(PENDING_EDIT_PATH) ? await readJson<PendingEditFile>(PENDING_EDIT_PATH) : null;
+  const pending: PendingEditFile = {
+    created_at: existing?.created_at ?? new Date().toISOString(),
+    summary,
+    operations: [...(existing?.operations ?? []), ...operations]
   };
 
-  return {
-    mapState: {
-      ...mapState,
-      points: normalizedPoints
-    },
-    routes: normalizedRoutes
-  };
+  if (preview.mapPoints && !preview.routes && existing?.operations) {
+    const workspace = applyOperations(await readWorkspace(), pending.operations);
+    const rendered = renderWorkspace(workspace);
+    await writePendingPreview(pending, { mapPoints: rendered.mapPoints, routes: rendered.routes });
+    return;
+  }
+
+  await writePendingPreview(pending, preview);
 }
 
 export function sanitizeRoutes(rawRoutes: { routes: MapRoute[] } | MapRoute[], mapState: MapPointsFile): MapRoutesFile {

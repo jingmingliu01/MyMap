@@ -21,5 +21,5 @@ Selection guidance:
 
 Output:
 Return only valid structured JSON that conforms to the output contract requested by the caller for one place-selection file.
-The JSON must include the semantic fields requested by the caller, including group_type, selected_branch_ids, rejected_branch_ids, and notes.
+The JSON must include the semantic fields requested by the caller, including place_type, selected_branch_ids, rejected_branch_ids, and notes.
 Do not include markdown, prose outside JSON, or extra top-level commentary.

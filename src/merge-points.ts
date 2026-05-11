@@ -5,17 +5,17 @@ import path from "node:path";
 import OpenAI from "openai";
 import { z } from "zod";
 import { getSelectionConfig, type SelectionConfig } from "./shared/env";
-import type { MapPointsFile, PlaceBranch, PlaceGroup, PlaceSelectionFile, PlaceType, SeedFile } from "./shared/schema";
-import { CURRENT_POINTS_PATH, GENERATED_POINTS_PATH, LEGACY_POINTS_PATH, ROUTES_PATH, SELECTIONS_DIR } from "./shared/paths";
+import type { PlaceBranch, PlaceSourceFile, PlaceSelectionFile, PlaceType, SeedFile } from "./shared/schema";
+import { RENDER_POINTS_PATH, SELECTIONS_DIR } from "./shared/paths";
 import { createLlmClient, getLlmConfig, llmChatOptions, type LlmConfig } from "./shared/llm";
 import { POI_CANDIDATE_SELECTION_PROMPT_PATH, readPrompt } from "./shared/prompts";
-import { LLM_SELECTION_OUTPUT_CONTRACT, createSelectionPromptHash, maxSelectedForGroup } from "./shared/selection-policy";
+import { LLM_SELECTION_OUTPUT_CONTRACT, createSelectionPromptHash, maxSelectedForPlace } from "./shared/selection-policy";
 import { slugify } from "./shared/slug";
+import { writeWorkspaceFromSelectedBranches } from "./server/workspace";
 
 const PLACE_TYPES = ["restaurant", "cafe", "attraction", "mall", "place"] as const;
-const GROUP_COLORS = ["#d84f3a", "#247b5f", "#4d64c8", "#8a5a32", "#8f4fc7", "#cc7a1f", "#3d7f89", "#b9486a"];
 const BranchSelection = z.object({
-  group_type: z.enum(PLACE_TYPES).describe("The inferred semantic type of the requested place group."),
+  place_type: z.enum(PLACE_TYPES).describe("The inferred semantic type of the requested place."),
   selected_branch_ids: z.array(z.number().int().positive()).describe("Branch ids that should remain in the final map."),
   rejected_branch_ids: z.array(z.number().int().positive()).describe("Branch ids that should be excluded."),
   notes: z.string().describe("A short explanation of the selection.")
@@ -33,8 +33,8 @@ const SelectionCache = BranchSelection.extend({
   city: z.string()
 });
 
-interface PlaceGroupSource {
-  group: PlaceGroup;
+interface PlaceImportSource {
+  placeFile: PlaceSourceFile;
   filePath: string;
   sourcePlaceFile: string;
   sourceHash: string;
@@ -42,10 +42,10 @@ interface PlaceGroupSource {
 
 async function main() {
   const placesDir = process.argv[2] ?? "data/places";
-  const outputPath = process.argv[3] ?? GENERATED_POINTS_PATH;
+  const outputPath = process.argv[3] ?? RENDER_POINTS_PATH;
   const seedPath = process.env.SEED_PATH ?? "data/seeds.json";
   const seed = await readSeed(seedPath);
-  const placeSources = await readPlaceGroupsForSeed(seed, placesDir);
+  const placeSources = await readPlaceSourceFilesForSeed(seed, placesDir);
   const llmConfig = getLlmConfig();
   const selectionConfig = getSelectionConfig();
   const openai = createLlmClient(llmConfig);
@@ -58,66 +58,56 @@ async function main() {
   );
   console.log(`Using ${seedPath}: ${seed.items.join(", ")}`);
 
-  const filteredGroups: Array<{ group: PlaceGroup; groupType: PlaceType; branches: PlaceBranch[] }> = [];
+  const selectedPlaces: Array<{ placeFile: PlaceSourceFile; placeType: PlaceType; branches: PlaceBranch[] }> = [];
   for (const placeSource of placeSources) {
-    const { group } = placeSource;
-    if (group.branches.length === 0) {
-      console.warn(`${group.name}: skipped 0/0. No POI candidates were available.`);
+    const { placeFile } = placeSource;
+    if (placeFile.branches.length === 0) {
+      console.warn(`${placeFile.name}: skipped 0/0. No POI candidates were available.`);
       continue;
     }
 
     const selection = await getSelection(openai, llmConfig, selectionPrompt, promptHash, selectionConfig, placeSource);
     const selectedIds = new Set(selection.selected_branch_ids);
-    const filteredBranches = group.branches.filter((branch) => selectedIds.has(branch.id));
+    const filteredBranches = placeFile.branches.filter((branch) => selectedIds.has(branch.id));
 
     if (filteredBranches.length === 0) {
-      console.warn(`${group.name}: skipped 0/${group.branches.length}. ${selection.notes}`);
+      console.warn(`${placeFile.name}: skipped 0/${placeFile.branches.length}. ${selection.notes}`);
       continue;
     }
 
-    console.log(`${group.name}: kept ${filteredBranches.length}/${group.branches.length} as ${selection.group_type}. ${selection.notes}`);
-    filteredGroups.push({ group, groupType: selection.group_type, branches: filteredBranches });
+    console.log(`${placeFile.name}: kept ${filteredBranches.length}/${placeFile.branches.length} as ${selection.place_type}. ${selection.notes}`);
+    selectedPlaces.push({ placeFile, placeType: selection.place_type, branches: filteredBranches });
   }
 
-  const merged: MapPointsFile = {
-    city: seed.city,
-    coordinate_system: "GCJ-02",
-    map_provider: "amap",
-    points: filteredGroups.flatMap(({ group, groupType, branches }, groupIndex) => {
-      const slug = slugify(group.name);
-      const groupColor = GROUP_COLORS[groupIndex % GROUP_COLORS.length];
-
-      return branches.map((branch, index) => {
-        const branchId = index + 1;
-        return {
-          id: `${slug}-${branchId}`,
-          group_name: group.name,
-          group_type: groupType,
-          group_color: groupColor,
-          branch_id: branchId,
-          branch_name: branch.branch_name,
-          label: String(branchId),
-          address: branch.address,
-          district: branch.district,
-          longitude: branch.longitude,
-          latitude: branch.latitude,
-          visible: true
-        };
-      });
-    })
-  };
-
-  if (merged.points.length === 0) {
+  const selectedBranchCount = selectedPlaces.reduce((total, place) => total + place.branches.length, 0);
+  if (selectedBranchCount === 0) {
     throw new Error("LLM selected 0 points for all current seed items. Refusing to write an empty map.");
   }
 
-  await mkdir(path.dirname(outputPath), { recursive: true });
-  await writeJson(outputPath, merged);
-  await writeJson(CURRENT_POINTS_PATH, merged);
-  await writeJson(LEGACY_POINTS_PATH, merged);
-  await writeJson(ROUTES_PATH, { routes: [] });
-  console.log(`Wrote ${merged.points.length} points to ${outputPath}`);
-  console.log(`Reset editable state at ${CURRENT_POINTS_PATH}`);
+  const rendered = await writeWorkspaceFromSelectedBranches({
+    city: seed.city,
+    sourcePath: seedPath,
+    places: selectedPlaces.map(({ placeFile, placeType, branches }) => ({
+      placeName: placeFile.name,
+      placeType,
+      branches: branches.map((branch) => ({
+        branchName: branch.branch_name,
+        address: branch.address,
+        district: branch.district,
+        longitude: branch.longitude,
+        latitude: branch.latitude,
+        providerPlaceId: branch.provider_place_id,
+        providerType: branch.provider_type,
+        providerTypecode: branch.provider_typecode
+      }))
+    }))
+  });
+  if (outputPath !== RENDER_POINTS_PATH) {
+    await mkdir(path.dirname(outputPath), { recursive: true });
+    await writeJson(outputPath, rendered.mapPoints);
+  }
+  console.log(`Wrote ${rendered.mapPoints.points.length} points to ${outputPath}`);
+  console.log(`Reset workspace source of truth and render artifacts.`);
 }
 
 async function getSelection(
@@ -126,32 +116,32 @@ async function getSelection(
   selectionPrompt: string,
   promptHash: string,
   selectionConfig: SelectionConfig,
-  placeSource: PlaceGroupSource
+  placeSource: PlaceImportSource
 ): Promise<PlaceSelectionFile> {
   const selectionPath = path.join(SELECTIONS_DIR, `${path.basename(placeSource.filePath, ".json")}.selection.json`);
   const cached = await readCachedSelection(selectionPath, llmConfig, promptHash, selectionConfig, placeSource);
   if (cached) {
-    console.log(`${placeSource.group.name}: reused cached selection ${selectionPath}`);
+    console.log(`${placeSource.placeFile.name}: reused cached selection ${selectionPath}`);
     return cached;
   }
 
-  const semanticSelection = await selectRelevantBranches(openai, llmConfig, selectionPrompt, selectionConfig, placeSource.group);
+  const semanticSelection = await selectRelevantBranches(openai, llmConfig, selectionPrompt, selectionConfig, placeSource.placeFile);
   const selection: PlaceSelectionFile = {
     source_place_file: placeSource.sourcePlaceFile,
     source_hash: placeSource.sourceHash,
     prompt_hash: promptHash,
     provider: llmConfig.provider,
     model: llmConfig.model,
-    name: placeSource.group.name,
-    city: placeSource.group.city,
-    group_type: semanticSelection.group_type,
+    name: placeSource.placeFile.name,
+    city: placeSource.placeFile.city,
+    place_type: semanticSelection.place_type,
     selected_branch_ids: semanticSelection.selected_branch_ids,
     rejected_branch_ids: semanticSelection.rejected_branch_ids,
     notes: semanticSelection.notes
   };
 
   await writeJson(selectionPath, selection);
-  console.log(`${placeSource.group.name}: wrote selection ${selectionPath}`);
+  console.log(`${placeSource.placeFile.name}: wrote selection ${selectionPath}`);
   return selection;
 }
 
@@ -160,7 +150,7 @@ async function readCachedSelection(
   llmConfig: LlmConfig,
   promptHash: string,
   selectionConfig: SelectionConfig,
-  placeSource: PlaceGroupSource
+  placeSource: PlaceImportSource
 ): Promise<PlaceSelectionFile | null> {
   let content: string;
   try {
@@ -191,14 +181,14 @@ async function readCachedSelection(
     cached.prompt_hash === promptHash &&
     cached.provider === llmConfig.provider &&
     cached.model === llmConfig.model &&
-    cached.name === placeSource.group.name &&
-    cached.city === placeSource.group.city;
+    cached.name === placeSource.placeFile.name &&
+    cached.city === placeSource.placeFile.city;
 
   if (!matchesSource) {
     return null;
   }
 
-  const sanitized = sanitizeSelection(cached, placeSource.group.branches, maxSelectedForGroup(cached.group_type, selectionConfig));
+  const sanitized = sanitizeSelection(cached, placeSource.placeFile.branches, maxSelectedForPlace(cached.place_type, selectionConfig));
   return {
     source_place_file: cached.source_place_file,
     source_hash: cached.source_hash,
@@ -207,7 +197,7 @@ async function readCachedSelection(
     model: cached.model,
     name: cached.name,
     city: cached.city,
-    group_type: sanitized.group_type,
+    place_type: sanitized.place_type,
     selected_branch_ids: sanitized.selected_branch_ids,
     rejected_branch_ids: sanitized.rejected_branch_ids,
     notes: sanitized.notes
@@ -219,9 +209,9 @@ async function selectRelevantBranches(
   llmConfig: LlmConfig,
   selectionPrompt: string,
   selectionConfig: SelectionConfig,
-  group: PlaceGroup
+  placeFile: PlaceSourceFile
 ): Promise<BranchSelectionResult> {
-  const candidates = group.branches.map((branch) => ({
+  const candidates = placeFile.branches.map((branch) => ({
     id: branch.id,
     name: branch.branch_name,
     address: branch.address,
@@ -239,8 +229,8 @@ async function selectRelevantBranches(
         role: "user",
         content: JSON.stringify(
           {
-            query: group.name,
-            city: group.city,
+            query: placeFile.name,
+            city: placeFile.city,
             candidates,
             output_contract: LLM_SELECTION_OUTPUT_CONTRACT
           },
@@ -257,11 +247,11 @@ async function selectRelevantBranches(
 
   const content = response.choices[0]?.message?.content;
   if (!content) {
-    throw new Error(`LLM did not return branch selection content for ${group.name}.`);
+    throw new Error(`LLM did not return branch selection content for ${placeFile.name}.`);
   }
 
   const parsed = BranchSelection.parse(parseJsonObject(content));
-  return sanitizeSelection(parsed, group.branches, maxSelectedForGroup(parsed.group_type, selectionConfig));
+  return sanitizeSelection(parsed, placeFile.branches, maxSelectedForPlace(parsed.place_type, selectionConfig));
 }
 
 function sanitizeSelection(selection: BranchSelectionResult, branches: PlaceBranch[], maxSelected: number): BranchSelectionResult {
@@ -274,7 +264,7 @@ function sanitizeSelection(selection: BranchSelectionResult, branches: PlaceBran
   ]).filter((id) => validIds.has(id) && !selectedIdSet.has(id));
 
   return {
-    group_type: selection.group_type,
+    place_type: selection.place_type,
     selected_branch_ids,
     rejected_branch_ids,
     notes: selection.notes
@@ -317,8 +307,8 @@ async function readSeed(seedPath: string): Promise<SeedFile> {
   return seed;
 }
 
-async function readPlaceGroupsForSeed(seed: SeedFile, placesDir: string): Promise<PlaceGroupSource[]> {
-  const groups: PlaceGroupSource[] = [];
+async function readPlaceSourceFilesForSeed(seed: SeedFile, placesDir: string): Promise<PlaceImportSource[]> {
+  const placeSources: PlaceImportSource[] = [];
   for (const item of seed.items) {
     const file = `${slugify(item)}.json`;
     const filePath = path.join(placesDir, file);
@@ -332,31 +322,31 @@ async function readPlaceGroupsForSeed(seed: SeedFile, placesDir: string): Promis
       throw error;
     }
 
-    const group = JSON.parse(content) as PlaceGroup;
-    validatePlaceGroup(group, filePath);
-    if (group.name !== item) {
-      throw new Error(`${filePath} has name=${JSON.stringify(group.name)}, but current seed item is ${JSON.stringify(item)}.`);
+    const placeFile = JSON.parse(content) as PlaceSourceFile;
+    validatePlaceSourceFile(placeFile, filePath);
+    if (placeFile.name !== item) {
+      throw new Error(`${filePath} has name=${JSON.stringify(placeFile.name)}, but current seed item is ${JSON.stringify(item)}.`);
     }
-    if (group.city !== seed.city) {
-      throw new Error(`${filePath} has city=${JSON.stringify(group.city)}, but current seed city is ${JSON.stringify(seed.city)}. Run npm run fetch:places again.`);
+    if (placeFile.city !== seed.city) {
+      throw new Error(`${filePath} has city=${JSON.stringify(placeFile.city)}, but current seed city is ${JSON.stringify(seed.city)}. Run npm run fetch:places again.`);
     }
-    groups.push({
-      group,
+    placeSources.push({
+      placeFile,
       filePath,
       sourcePlaceFile: path.relative(process.cwd(), filePath),
       sourceHash: hashText(content)
     });
   }
 
-  return groups;
+  return placeSources;
 }
 
-function validatePlaceGroup(group: PlaceGroup, filePath: string) {
-  if (!group.name || !group.city || !group.type || !Array.isArray(group.branches)) {
-    throw new Error(`${filePath} is not a valid place group JSON file.`);
+function validatePlaceSourceFile(placeFile: PlaceSourceFile, filePath: string) {
+  if (!placeFile.name || !placeFile.city || !placeFile.type || !Array.isArray(placeFile.branches)) {
+    throw new Error(`${filePath} is not a valid place source JSON file.`);
   }
 
-  for (const branch of group.branches) {
+  for (const branch of placeFile.branches) {
     if (!Number.isFinite(branch.longitude) || !Number.isFinite(branch.latitude)) {
       throw new Error(`${filePath} has a branch without valid longitude/latitude.`);
     }

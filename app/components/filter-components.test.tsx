@@ -3,7 +3,7 @@ import test, { afterEach, before } from "node:test";
 import { fireEvent, render, cleanup } from "@testing-library/react";
 import { JSDOM } from "jsdom";
 import type { MapPoint, MapRoute } from "../../src/shared/schema";
-import { GroupFilter } from "./GroupFilter";
+import { CategoryFilter, PlaceFilter } from "./MapFilters";
 import { RouteFilter } from "./RouteFilter";
 
 before(() => {
@@ -23,22 +23,24 @@ afterEach(() => {
   cleanup();
 });
 
-test("GroupFilter renders visible group counts and toggles selection", () => {
+test("CategoryFilter renders category counts and toggles selection", () => {
   const selections: Array<string | null> = [];
-  const view = render(<GroupFilter points={points} activeGroup={null} onSelect={(groupName) => selections.push(groupName)} />);
+  const view = render(<CategoryFilter points={points} activeCategoryId={null} onSelect={(categoryId) => selections.push(categoryId)} />);
 
   assert.equal(view.getByRole("button", { name: /全部地点/ }).getAttribute("aria-pressed"), "true");
-  assert.match(view.getByRole("button", { name: /禾味点/ }).textContent ?? "", /2/);
-  assert.match(view.getByRole("button", { name: /太古汇/ }).textContent ?? "", /1/);
+  assert.match(view.getByRole("button", { name: /餐饮/ }).textContent ?? "", /2/);
+  assert.match(view.getByRole("button", { name: /购物/ }).textContent ?? "", /1/);
 
-  fireEvent.click(view.getByRole("button", { name: /禾味点/ }));
+  fireEvent.click(view.getByRole("button", { name: /餐饮/ }));
 
-  assert.deepEqual(selections, ["禾味点"]);
+  assert.deepEqual(selections, ["cat_food"]);
 });
 
-test("GroupFilter clears the active group when the active chip is clicked again", () => {
+test("PlaceFilter clears the active place when the active chip is clicked again", () => {
   const selections: Array<string | null> = [];
-  const view = render(<GroupFilter points={points} activeGroup="禾味点" onSelect={(groupName) => selections.push(groupName)} />);
+  const view = render(
+    <PlaceFilter points={points} activePlaceId="place_heweidian" collapsed={false} onToggleCollapsed={() => undefined} onSelect={(placeId) => selections.push(placeId)} />
+  );
 
   assert.equal(view.getByRole("button", { name: /禾味点/ }).getAttribute("aria-pressed"), "true");
 
@@ -62,9 +64,11 @@ test("RouteFilter renders route counts and emits selection changes", () => {
 const points: MapPoint[] = [
   {
     id: "heweidian-1",
-    group_name: "禾味点",
-    group_type: "restaurant",
-    group_color: "#247b5f",
+    branch_stable_id: "heweidian-1",
+    place_id: "place_heweidian",
+    place_name: "禾味点",
+    place_type: "restaurant",
+    place_color: "#247b5f",
     branch_id: 1,
     branch_name: "禾味点 A",
     label: "1",
@@ -72,13 +76,17 @@ const points: MapPoint[] = [
     district: "天河区",
     longitude: 113.1,
     latitude: 23.1,
+    category_ids: ["cat_food"],
+    category_names: ["餐饮"],
     visible: true
   },
   {
     id: "heweidian-2",
-    group_name: "禾味点",
-    group_type: "restaurant",
-    group_color: "#247b5f",
+    branch_stable_id: "heweidian-2",
+    place_id: "place_heweidian",
+    place_name: "禾味点",
+    place_type: "restaurant",
+    place_color: "#247b5f",
     branch_id: 2,
     branch_name: "禾味点 B",
     label: "2",
@@ -86,13 +94,17 @@ const points: MapPoint[] = [
     district: "天河区",
     longitude: 113.2,
     latitude: 23.2,
+    category_ids: ["cat_food"],
+    category_names: ["餐饮"],
     visible: true
   },
   {
     id: "taikoo-1",
-    group_name: "太古汇",
-    group_type: "mall",
-    group_color: "#d84f3a",
+    branch_stable_id: "taikoo-1",
+    place_id: "place_taikoo",
+    place_name: "太古汇",
+    place_type: "mall",
+    place_color: "#d84f3a",
     branch_id: 1,
     branch_name: "太古汇",
     label: "1",
@@ -100,6 +112,8 @@ const points: MapPoint[] = [
     district: "天河区",
     longitude: 113.3,
     latitude: 23.3,
+    category_ids: ["cat_shopping"],
+    category_names: ["购物"],
     visible: true
   }
 ];

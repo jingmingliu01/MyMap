@@ -9,6 +9,11 @@ data/map-points.generated.json
 data/map-points.json
 data/map-state.json
 data/routes.json
+data/render/*.json
+data/preview/*.json
+data/workspace/*.json
+data/imports/runs/
+!data/imports/runs/.gitkeep
 data/places/*.json
 data/selections/*.json
 output/*.png

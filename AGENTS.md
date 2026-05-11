@@ -90,7 +90,7 @@ natural language -> typed operations -> preview -> Apply/Revert -> workspace upd
 
 ## Filter UI Direction
 
-The future map filter UI has three conceptual rows:
+The map filter UI has three conceptual rows:
 
 ```text
 Categories: [全部地点] [餐饮] [景点] [购物] ...
@@ -104,13 +104,20 @@ Filtering operates on Branches.
 
 ## Current MVP Caveat
 
-The current code still contains older names and files such as:
+The current import path still contains older seed/candidate files such as:
 
 ```text
 data/seeds.json
 data/places/*.json
 data/selections/*.selection.json
-data/map-state.json
 ```
 
-When changing these areas, migrate toward the workspace model instead of deepening the old seed-centric model.
+The current runtime model is workspace-first:
+
+```text
+data/workspace/*.json
+data/render/*.json
+data/preview/*.json
+```
+
+When changing imports, keep moving toward import-run records instead of deepening the old seed-centric model.

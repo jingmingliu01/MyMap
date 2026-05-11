@@ -4,6 +4,10 @@ Date: 2026-05-11
 
 Status: final design baseline for future implementation.
 
+Implementation progress:
+
+- `docs/2026-05-11-workspace-implementation-progress.md`
+
 This document unifies:
 
 - `docs/2026-05-10-map-data-model-design.md`

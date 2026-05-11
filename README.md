@@ -2,13 +2,14 @@
 
 MyMap is an AI-assisted map workspace for collecting, filtering, editing, and exporting travel map data.
 
-The current MVP can import a compact seed list, fetch POI candidates from AMap, use an LLM to select relevant results, render an interactive map, and export a PNG. The product direction is broader: imported places become workspace data that can later be organized with Categories, Tags, Places, Branches, Routes, and Archive.
+The current MVP can import a compact seed list, fetch POI candidates from AMap, use an LLM to select relevant results, write workspace data, render an interactive map, and export a PNG. Imported places are stored as Places and Branches, then rendered through derived map files.
 
 ```text
 import seed
   -> POI search
   -> LLM selection
-  -> map workspace data
+  -> workspace Places / Branches / Categories
+  -> render artifacts
   -> interactive map
   -> PNG export
 ```
@@ -27,7 +28,7 @@ All generated places:
 
 Selected place:
 
-![MyMap selected place](assets/readme/map-selected-group.png)
+![MyMap selected place](assets/readme/map-selected-place.png)
 
 ## Current MVP Input
 
@@ -45,7 +46,7 @@ Create or edit `data/seeds.json`:
 }
 ```
 
-In the current implementation, `city` is used as the AMap POI search boundary and `items` are place names to import. In the future workspace model, seed files become import recipes under `data/imports/seeds/` and should incrementally add data instead of resetting the map.
+`city` is used as the AMap POI search boundary and `items` are place names to import.
 
 ## API Keys
 
@@ -85,7 +86,7 @@ OPENAI_API_KEY=...
 npm start
 ```
 
-The setup script writes `.env`, installs dependencies, prepares `data/seeds.json` if needed, runs POI search, runs LLM selection, generates map data, and starts the local app.
+The setup script writes `.env`, installs dependencies, prepares `data/seeds.json` if needed, runs POI search, runs LLM selection, writes workspace data, generates render artifacts, and starts the local app.
 
 Open:
 
@@ -140,17 +141,18 @@ npm run check          # typecheck, test, and build
 
 ## Generated Data
 
-Current generated files:
+Current runtime files:
 
 ```text
-data/places/*.json
-data/selections/*.selection.json
-data/map-state.json
-data/routes.json
+data/places/*.json                    # provider candidates from AMap
+data/selections/*.selection.json       # import-time LLM selection cache
+data/workspace/*.json                  # workspace source of truth
+data/render/*.json                     # derived map render files
+data/preview/*.json                    # temporary AI preview files
 output/*.png
 ```
 
-These runtime outputs are ignored by Git and can be recreated from imports and API calls.
+These runtime outputs are ignored by Git. The map page reads `data/render/map-points.json` and `data/render/routes.json`; previews are shown from `data/preview/` until the user applies or reverts them.
 
 ## Design Notes
 
@@ -161,4 +163,3 @@ The current source of truth for future architecture is:
 ```text
 docs/2026-05-11-final-workspace-design.md
 ```
-

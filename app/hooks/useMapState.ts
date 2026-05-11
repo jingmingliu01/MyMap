@@ -11,7 +11,7 @@ export function useMapState(initialState: MapStateResponse) {
     window.__MYMAP__ = { ready: false, markerCount: 0 };
   }, []);
 
-  const mapState = state?.preview ?? state?.current ?? null;
+  const mapState = state?.preview ?? state?.rendered ?? null;
   const routeState = state?.preview_routes ?? state?.routes ?? { routes: [] };
   const visiblePoints = useMemo<MapPoint[]>(() => mapState?.points.filter((point) => point.visible !== false) ?? [], [mapState]);
 
@@ -25,7 +25,7 @@ export function useMapState(initialState: MapStateResponse) {
 
   const revertPreview = useCallback(async () => {
     setError(null);
-    setStatus("正在恢复 generated 状态...");
+    setStatus("正在放弃预览...");
     const nextState = await apiPost<MapStateResponse>("/api/revert-preview", {});
     setState(nextState);
     setStatus("");
