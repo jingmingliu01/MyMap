@@ -4,7 +4,6 @@ dist/
 tsconfig.tsbuildinfo
 .env
 .DS_Store
-docs/
 data/*.preview.json
 data/map-points.generated.json
 data/map-points.json

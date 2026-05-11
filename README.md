@@ -1,14 +1,22 @@
 # MyMap
 
-AI-assisted map workflow for turning a compact place list into an interactive travel map.
+MyMap is an AI-assisted map workspace for collecting, filtering, editing, and exporting travel map data.
+
+The current MVP can import a compact seed list, fetch POI candidates from AMap, use an LLM to select relevant results, render an interactive map, and export a PNG. The product direction is broader: imported places become workspace data that can later be organized with Categories, Tags, Places, Branches, Routes, and Archive.
 
 ```text
-data/seeds.json
+import seed
   -> POI search
   -> LLM selection
-  -> structured map data
+  -> map workspace data
   -> interactive map
   -> PNG export
+```
+
+For the canonical future data model, see:
+
+```text
+docs/2026-05-11-final-workspace-design.md
 ```
 
 ## Preview
@@ -17,11 +25,11 @@ All generated places:
 
 ![MyMap all places](assets/readme/map-all-points.png)
 
-Selected group:
+Selected place:
 
-![MyMap selected group](assets/readme/map-selected-group.png)
+![MyMap selected place](assets/readme/map-selected-group.png)
 
-## Input
+## Current MVP Input
 
 Create or edit `data/seeds.json`:
 
@@ -37,11 +45,11 @@ Create or edit `data/seeds.json`:
 }
 ```
 
-`city` is used as the POI search boundary. `items` can be restaurants, landmarks, malls, cafes, hotels, or other place names.
+In the current implementation, `city` is used as the AMap POI search boundary and `items` are place names to import. In the future workspace model, seed files become import recipes under `data/imports/seeds/` and should incrementally add data instead of resetting the map.
 
 ## API Keys
 
-MyMap requires AMap for map data and one LLM provider for candidate selection.
+MyMap requires AMap for POI data and map rendering, plus one LLM provider for candidate selection.
 
 ### AMap
 
@@ -85,7 +93,7 @@ Open:
 http://127.0.0.1:5173/
 ```
 
-## Update Places
+## Update Imported Places
 
 Edit:
 
@@ -132,13 +140,7 @@ npm run check          # typecheck, test, and build
 
 ## Generated Data
 
-Primary input:
-
-```text
-data/seeds.json
-```
-
-Generated files:
+Current generated files:
 
 ```text
 data/places/*.json
@@ -148,4 +150,15 @@ data/routes.json
 output/*.png
 ```
 
-Generated files are ignored by Git and can be recreated from `data/seeds.json`.
+These runtime outputs are ignored by Git and can be recreated from imports and API calls.
+
+## Design Notes
+
+Important design documents are tracked in `docs/`.
+
+The current source of truth for future architecture is:
+
+```text
+docs/2026-05-11-final-workspace-design.md
+```
+
